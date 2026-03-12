@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>五年级数学：通风管表面积演示</title>
+    <!-- 引入 Tailwind CSS 用于快速构建美观的界面 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Three.js 用于 3D 渲染 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #f3f4f6; font-family: sans-serif; }
+        #canvas-container { width: 100vw; height: 100vh; display: block; }
+        .panel { position: absolute; top: 20px; right: 20px; width: 320px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .instruction { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); color: white; padding: 10px 20px; border-radius: 20px; font-size: 14px; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+    <!-- 3D 渲染容器 -->
+    <div id="canvas-container"></div>
+
+    <!-- 交互与解说面板 -->
+    <div class="panel">
+        <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">通风管表面积解析</h2>
+        
+        <div class="mb-6 space-y-3 text-sm text-gray-600">
+            <p><strong class="text-blue-600">难点突破：</strong>通风管的两端是为了让空气流通的，因此<strong>没有前后面（完全中空）</strong>。</p>
+            <p>长方体原本有6个面，制作通风管只需要计算<strong>4个侧面</strong>的面积。</p>
+            <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                <p class="font-semibold text-gray-800 mb-1">单根铁皮面积算式：</p>
+                <p>0.4 × 2 × 4 = 3.2 (平方米)</p>
+                <p class="text-xs text-gray-500 mt-1">(宽 × 长 × 4个面)</p>
+            </div>
+        </div>
+
+        <div class="flex flex-col space-y-3">
+            <button id="btn-fold" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded transition-colors duration-200">
+                1. 观察立体结构 (折叠)
+            </button>
+            <button id="btn-unfold" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition-colors duration-200 shadow-md shadow-blue-200">
+                2. 展开铁皮侧面 (平铺)
+            </button>
+            <button id="btn-cross-section" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded transition-colors duration-200 shadow-md shadow-red-200">
+                3. 显示/隐藏 横截面
+            </button>
+            <button id="btn-transparent" class="bg-teal-500 hover:bg-teal-600 text-white font-semibold py-2 px-4 rounded transition-colors duration-200 shadow-md shadow-teal-200">
+                4. 切换 透明/实体 模式
+            </button>
+            <div class="border-t pt-3 mt-2">
+                <button id="btn-reset" class="w-full bg-gray-700 hover:bg-gray-900 text-white font-semibold py-2 px-4 rounded transition-colors duration-200 shadow-sm">
+                    🔄 重置所有状态
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="instruction">
+        👉 提示：在屏幕上按住鼠标左键拖拽，可以 360° 旋转查看通风管内部
+    </div>
+
+    <script>
+        // --- 1. 基础场景设置 ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color('#f8fafc'); // 浅灰蓝色背景
+
+        // 相机设置 (视野角度, 宽高比, 近截面, 远截面)
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(0, 0, 5); // 将相机向后移动以便看清全貌
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        // --- 2. 灯光设置 ---
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(5, 10, 7);
+        scene.add(dirLight);
+
+        // --- 3. 构建通风管模型 (4个独立的面) ---
+        // 设定尺寸：长 2m，宽 0.4m。 为了在屏幕上显示更适中，直接使用 2 和 0.4 作为单位
+        const pipeLength = 2;
+        const pipeWidth = 0.4;
+        
+        // 材质：铁皮质感 (双面渲染，以便能看到管子内部)
+        const ironMaterial = new THREE.MeshStandardMaterial({ 
+            color: '#94a3b8', 
+            roughness: 0.4,
+            metalness: 0.6,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 1.0
+        });
+        // 边线材质 (黑色，方便看清轮廓)
+        const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x1e293b, linewidth: 2 });
+
+        // 创建单个面的辅助函数
+        function createFace() {
+            const geometry = new THREE.PlaneGeometry(pipeLength, pipeWidth);
+            const mesh = new THREE.Mesh(geometry, ironMaterial);
+            
+            // 添加黑色边框线
+            const edges = new THREE.EdgesGeometry(geometry);
+            const line = new THREE.LineSegments(edges, edgeMaterial);
+            mesh.add(line);
+            
+            return mesh;
+        }
+
+        const faceFront = createFace();
+        const faceTop = createFace();
+        const faceBack = createFace();
+        const faceBottom = createFace();
+
+        // 将4个面放入一个组中，方便整体旋转
+        const pipeGroup = new THREE.Group();
+        pipeGroup.add(faceFront);
+        pipeGroup.add(faceTop);
+        pipeGroup.add(faceBack);
+        pipeGroup.add(faceBottom);
+        
+        // 初始给管子一个轻微的倾斜角度，展示立体感
+        pipeGroup.rotation.x = 0.4;
+        pipeGroup.rotation.y = -0.5;
+        scene.add(pipeGroup);
+
+        // --- 新增：横截面指示面 ---
+        const crossSectionGeometry = new THREE.PlaneGeometry(pipeWidth, pipeWidth);
+        const crossSectionMaterial = new THREE.MeshBasicMaterial({
+            color: 0xff3333, // 醒目的红色
+            side: THREE.DoubleSide, 
+            transparent: true, 
+            opacity: 0.7
+        });
+        const crossSectionMesh = new THREE.Mesh(crossSectionGeometry, crossSectionMaterial);
+        // 放置在管子的一端 (X轴正方向端点)
+        crossSectionMesh.position.set(pipeLength / 2, 0, 0); 
+        // 旋转使其垂直于管子长度方向，封住管口
+        crossSectionMesh.rotation.y = Math.PI / 2;
+        crossSectionMesh.visible = false; // 初始状态隐藏
+        pipeGroup.add(crossSectionMesh);
+
+        // --- 4. 动画状态数据 ---
+        let isUnfolded = false;
+        const halfWidth = pipeWidth / 2; // 0.2
+
+        // 定义每个面在“折叠(立体)”和“展开(平铺)”两种状态下的目标位置和旋转角度
+        const states = {
+            front: {
+                folded:   { pos: new THREE.Vector3(0, 0, halfWidth), rot: new THREE.Euler(0, 0, 0) },
+                unfolded: { pos: new THREE.Vector3(0, pipeWidth * 1.5, 0), rot: new THREE.Euler(0, 0, 0) }
+            },
+            top: {
+                folded:   { pos: new THREE.Vector3(0, halfWidth, 0), rot: new THREE.Euler(-Math.PI/2, 0, 0) },
+                unfolded: { pos: new THREE.Vector3(0, pipeWidth * 0.5, 0), rot: new THREE.Euler(0, 0, 0) }
+            },
+            back: {
+                folded:   { pos: new THREE.Vector3(0, 0, -halfWidth), rot: new THREE.Euler(Math.PI, 0, 0) },
+                unfolded: { pos: new THREE.Vector3(0, -pipeWidth * 0.5, 0), rot: new THREE.Euler(0, 0, 0) }
+            },
+            bottom: {
+                folded:   { pos: new THREE.Vector3(0, -halfWidth, 0), rot: new THREE.Euler(Math.PI/2, 0, 0) },
+                unfolded: { pos: new THREE.Vector3(0, -pipeWidth * 1.5, 0), rot: new THREE.Euler(0, 0, 0) }
+            }
+        };
+
+        // 初始化面到折叠状态
+        function applyStateImmediate(face, stateData) {
+            face.position.copy(stateData.pos);
+            face.rotation.copy(stateData.rot);
+        }
+        applyStateImmediate(faceFront, states.front.folded);
+        applyStateImmediate(faceTop, states.top.folded);
+        applyStateImmediate(faceBack, states.back.folded);
+        applyStateImmediate(faceBottom, states.bottom.folded);
+
+        // --- 5. 交互逻辑 (旋转与按钮点击) ---
+        // 鼠标拖拽旋转
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+
+        renderer.domElement.addEventListener('mousedown', () => { isDragging = true; });
+        renderer.domElement.addEventListener('mouseup', () => { isDragging = false; });
+        renderer.domElement.addEventListener('mouseleave', () => { isDragging = false; });
+        
+        renderer.domElement.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const deltaMove = {
+                    x: e.offsetX - previousMousePosition.x,
+                    y: e.offsetY - previousMousePosition.y
+                };
+                // 根据鼠标移动调整管子整体的旋转角度
+                pipeGroup.rotation.y += deltaMove.x * 0.01;
+                pipeGroup.rotation.x += deltaMove.y * 0.01;
+            }
+            previousMousePosition = { x: e.offsetX, y: e.offsetY };
+        });
+
+        // 按钮事件绑定
+        document.getElementById('btn-unfold').addEventListener('click', () => {
+            isUnfolded = true;
+            // 展开时，自动将主视角回正，方便观察平面的长方形
+            targetGroupRotation.x = 0;
+            targetGroupRotation.y = 0;
+            // 展开时自动隐藏横截面，避免穿模视觉干扰
+            crossSectionMesh.visible = false;
+            isCrossSectionVisible = false;
+        });
+        
+        document.getElementById('btn-fold').addEventListener('click', () => {
+            isUnfolded = false;
+            // 折叠时，恢复一定的倾斜角度展现立体感
+            targetGroupRotation.x = 0.4;
+            targetGroupRotation.y = -0.5;
+        });
+
+        // --- 新增：横截面与透明度按钮逻辑 ---
+        let isCrossSectionVisible = false;
+        document.getElementById('btn-cross-section').addEventListener('click', () => {
+            // 仅在折叠状态下允许显示横截面
+            if (!isUnfolded) {
+                isCrossSectionVisible = !isCrossSectionVisible;
+                crossSectionMesh.visible = isCrossSectionVisible;
+            }
+        });
+
+        let isTransparent = false;
+        document.getElementById('btn-transparent').addEventListener('click', () => {
+            isTransparent = !isTransparent;
+            // 切换透明度：开启时半透明(0.3)，关闭时完全不透明(1.0)
+            ironMaterial.opacity = isTransparent ? 0.3 : 1.0;
+        });
+
+        // --- 新增：重置按钮逻辑 ---
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            isUnfolded = false;
+            isCrossSectionVisible = false;
+            crossSectionMesh.visible = false;
+            isTransparent = false;
+            ironMaterial.opacity = 1.0;
+            targetGroupRotation.x = 0.4;
+            targetGroupRotation.y = -0.5;
+        });
+
+        // --- 6. 渲染动画循环 ---
+        // 线性插值函数，用于平滑过渡动画
+        function lerp(start, end, amt) {
+            return (1 - amt) * start + amt * end;
+        }
+
+        let targetGroupRotation = { x: 0.4, y: -0.5 };
+        const lerpSpeed = 0.05; // 动画速度
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // 根据当前状态确定目标位置
+            const targetMode = isUnfolded ? 'unfolded' : 'folded';
+
+            // 平滑过渡每个面的位置和旋转
+            [
+                { mesh: faceFront, data: states.front },
+                { mesh: faceTop, data: states.top },
+                { mesh: faceBack, data: states.back },
+                { mesh: faceBottom, data: states.bottom }
+            ].forEach(item => {
+                const target = item.data[targetMode];
+                // 插值位置
+                item.mesh.position.lerp(target.pos, lerpSpeed);
+                
+                // 插值旋转角度 (手动对欧拉角进行插值)
+                item.mesh.rotation.x = lerp(item.mesh.rotation.x, target.rot.x, lerpSpeed);
+                item.mesh.rotation.y = lerp(item.mesh.rotation.y, target.rot.y, lerpSpeed);
+                item.mesh.rotation.z = lerp(item.mesh.rotation.z, target.rot.z, lerpSpeed);
+            });
+
+            // 如果不是在手动拖拽，平滑回正整体视角
+            if (!isDragging) {
+                pipeGroup.rotation.x = lerp(pipeGroup.rotation.x, targetGroupRotation.x, lerpSpeed);
+                pipeGroup.rotation.y = lerp(pipeGroup.rotation.y, targetGroupRotation.y, lerpSpeed);
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // 窗口缩放适配
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // 启动动画
+        animate();
+    </script>
+</body>
+</html>

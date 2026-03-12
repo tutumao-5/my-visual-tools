@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>空间几何体组合演示</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Microsoft YaHei', sans-serif; background-color: #f0f2f5; }
+        canvas { display: block; }
+        #ui-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 320px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            pointer-events: auto;
+        }
+        h2 { margin-top: 0; font-size: 18px; color: #333; text-align: center; border-bottom: 2px solid #1890ff; padding-bottom: 10px; }
+        .section-title { font-weight: bold; font-size: 15px; margin: 15px 0 10px 0; color: #555; }
+        button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 8px;
+            border: none;
+            border-radius: 6px;
+            background-color: #f0f0f0;
+            color: #333;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            padding-left: 15px;
+            border-left: 4px solid transparent;
+        }
+        button:hover { background-color: #e6f7ff; border-left-color: #1890ff; color: #1890ff; }
+        button.active { background-color: #e6f7ff; border-left-color: #1890ff; color: #1890ff; font-weight: bold; }
+        #status-text { margin-top: 15px; font-size: 14px; color: #d4380d; font-weight: bold; text-align: center; min-height: 20px; }
+        .control-group { margin-bottom: 15px; }
+    </style>
+    <!-- 引入 Three.js 和 OrbitControls 核心库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+    <div id="ui-panel">
+        <h2>从上面看图形不变的摆法</h2>
+        
+        <div class="control-group">
+            <div class="section-title">步骤一：确立基础</div>
+            <button id="btn-base" class="active" onclick="showState('base')">确立“地基”（4个正方体）</button>
+        </div>
+
+        <div class="control-group">
+            <div class="section-title">步骤二：第(1)题（5个正方体）</div>
+            <button id="btn-q1" onclick="showState('q1')">展示 4 种不同摆法 (点击切换)</button>
+        </div>
+
+        <div class="control-group">
+            <div class="section-title">步骤三：第(2)题（6个正方体）</div>
+            <button id="btn-q2-a" onclick="showState('q2-a')">情况A：叠在一起 (4种, 点击切换)</button>
+            <button id="btn-q2-b" onclick="showState('q2-b')">情况B：分散放置 (6种, 点击切换)</button>
+        </div>
+
+        <div id="status-text">当前状态：基础地基 (4个位置)</div>
+    </div>
+
+    <script>
+        // --- 1. 初始化场景、相机、渲染器 ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xf0f2f5);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(4, 5, 6);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        document.body.appendChild(renderer.domElement);
+
+        // --- 2. 添加灯光 ---
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(5, 10, 7);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 1024;
+        dirLight.shadow.mapSize.height = 1024;
+        scene.add(dirLight);
+
+        // --- 3. 添加网格辅助线 (地面) ---
+        const gridHelper = new THREE.GridHelper(10, 10, 0x888888, 0xdddddd);
+        gridHelper.position.y = -0.01; // 略微下沉防止闪烁
+        scene.add(gridHelper);
+
+        const planeGeometry = new THREE.PlaneGeometry(10, 10);
+        const planeMaterial = new THREE.ShadowMaterial({ opacity: 0.2 });
+        const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+        plane.rotation.x = -Math.PI / 2;
+        plane.receiveShadow = true;
+        scene.add(plane);
+
+        // --- 4. 控制器 ---
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.maxPolarAngle = Math.PI / 2 - 0.05; // 限制不能看向地下
+
+        // --- 5. 核心逻辑与几何体生成 ---
+        const cubeSize = 1;
+        const geometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+        
+        // 材质定义
+        const baseMaterial = new THREE.MeshLambertMaterial({ color: 0x40a9ff, transparent: true, opacity: 0.85 }); // 蓝色底座
+        const extraMaterial = new THREE.MeshLambertMaterial({ color: 0xff7a45 }); // 橘色新增正方体
+        const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 2 });
+
+        // 地基的4个固定坐标 (对应俯视图: 前排3个, 右后方1个)
+        const basePositions = [
+            { id: '1号', x: -1, z: 1 },  // 左前
+            { id: '2号', x: 0, z: 1 },   // 中前
+            { id: '3号', x: 1, z: 1 },   // 右前
+            { id: '4号', x: 1, z: 0 }    // 右后
+        ];
+
+        // 存储场景中的对象以便管理
+        let extraCubes = [];
+
+        // 辅助函数：创建带边框的正方体
+        function createCube(x, y, z, material) {
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.set(x, y, z);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+
+            const edges = new THREE.EdgesGeometry(geometry);
+            const line = new THREE.LineSegments(edges, edgeMaterial);
+            mesh.add(line);
+
+            scene.add(mesh);
+            return mesh;
+        }
+
+        // 初始化底座
+        function initBase() {
+            basePositions.forEach(pos => {
+                createCube(pos.x, cubeSize / 2, pos.z, baseMaterial);
+            });
+        }
+        initBase();
+
+        // 清理所有额外的正方体
+        function clearExtraCubes() {
+            extraCubes.forEach(cube => {
+                scene.remove(cube);
+                // 释放几何体和材质内存
+                cube.geometry.dispose();
+            });
+            extraCubes = [];
+        }
+
+        // --- 6. 状态机逻辑 ---
+        let q1Index = 0;
+        let q2aIndex = 0;
+        let q2bIndex = 0;
+
+        // 问题2B的两两组合情况 (在0,1,2,3四个位置中选2个)
+        const q2bCombinations = [
+            [0, 1], [0, 2], [0, 3], // 1和2, 1和3, 1和4
+            [1, 2], [1, 3],         // 2和3, 2和4
+            [2, 3]                  // 3和4
+        ];
+
+        window.showState = function(state) {
+            clearExtraCubes();
+            document.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+            const statusText = document.getElementById('status-text');
+
+            if (state === 'base') {
+                document.getElementById('btn-base').classList.add('active');
+                statusText.innerText = "当前状态：基础地基 (只能在这4个位置上方添加)";
+            } 
+            else if (state === 'q1') {
+                document.getElementById('btn-q1').classList.add('active');
+                const pos = basePositions[q1Index];
+                
+                // 在对应位置上叠加第2层
+                const cube = createCube(pos.x, cubeSize * 1.5, pos.z, extraMaterial);
+                extraCubes.push(cube);
+                
+                statusText.innerText = `第(1)题摆法 ${q1Index + 1}/4：第5个正方体放在 [${pos.id}] 上`;
+                q1Index = (q1Index + 1) % 4; // 循环切换
+            }
+            else if (state === 'q2-a') {
+                document.getElementById('btn-q2-a').classList.add('active');
+                const pos = basePositions[q2aIndex];
+                
+                // 叠放两层 (第2层和第3层)
+                const cube1 = createCube(pos.x, cubeSize * 1.5, pos.z, extraMaterial);
+                const cube2 = createCube(pos.x, cubeSize * 2.5, pos.z, extraMaterial);
+                extraCubes.push(cube1, cube2);
+                
+                statusText.innerText = `第(2)题 情况A ${q2aIndex + 1}/4：多出的2个叠放在 [${pos.id}] 上`;
+                q2aIndex = (q2aIndex + 1) % 4;
+            }
+            else if (state === 'q2-b') {
+                document.getElementById('btn-q2-b').classList.add('active');
+                const combo = q2bCombinations[q2bIndex];
+                const posA = basePositions[combo[0]];
+                const posB = basePositions[combo[1]];
+                
+                // 分散放在两个位置的第2层
+                const cube1 = createCube(posA.x, cubeSize * 1.5, posA.z, extraMaterial);
+                const cube2 = createCube(posB.x, cubeSize * 1.5, posB.z, extraMaterial);
+                extraCubes.push(cube1, cube2);
+                
+                statusText.innerText = `第(2)题 情况B ${q2bIndex + 1}/6：多出的2个分别放在 [${posA.id}] 和 [${posB.id}] 上`;
+                q2bIndex = (q2bIndex + 1) % 6;
+            }
+        };
+
+        // --- 7. 渲染循环与自适应缩放 ---
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
