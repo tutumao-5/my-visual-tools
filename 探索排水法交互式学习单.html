@@ -6,68 +6,87 @@
     <title>探索“排水法”求不规则物体体积</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 自定义一些动画和形状 */
+        /* 容器与基础形态 */
         .cup-glass {
             background: linear-gradient(90deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0.2) 100%);
             box-shadow: inset 0 0 20px rgba(0,0,0,0.05), 0 10px 30px rgba(0,0,0,0.1);
         }
         .water-body {
             background: linear-gradient(180deg, rgba(147, 197, 253, 0.8) 0%, rgba(59, 130, 246, 0.8) 100%);
-            transition: height 1s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: height 1.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .potato-shape {
+        
+        /* 材质样式：土豆 */
+        .shape-potato {
             border-radius: 60% 40% 50% 50% / 50% 50% 40% 60%;
             background: radial-gradient(circle at 30% 30%, #d9a05b, #8b5a2b);
             box-shadow: inset -5px -5px 10px rgba(0,0,0,0.3), 5px 5px 10px rgba(0,0,0,0.2);
-            transition: top 1s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: top 1s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s;
         }
-        .scale-line {
-            position: absolute;
-            width: 15px;
-            height: 2px;
-            background-color: #4a5568;
-            left: 0;
+        /* 材质样式：乒乓球 */
+        .shape-pingpong {
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #ffffff, #fba15a, #ea580c);
+            box-shadow: inset -5px -5px 10px rgba(0,0,0,0.1), 2px 2px 8px rgba(0,0,0,0.2);
+            transition: top 1s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s;
         }
-        .scale-text {
-            position: absolute;
-            left: 20px;
-            font-size: 0.75rem;
-            color: #4a5568;
-            transform: translateY(-50%);
+        /* 材质样式：方糖 */
+        .shape-sugar {
+            border-radius: 8px;
+            background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%);
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.05), 2px 2px 5px rgba(0,0,0,0.1);
+            transition: top 1s cubic-bezier(0.4, 0, 0.2, 1), transform 0.1s linear;
         }
+
+        .scale-line { position: absolute; width: 15px; height: 2px; background-color: #4a5568; left: 0; }
+        .scale-text { position: absolute; left: 20px; font-size: 0.75rem; color: #4a5568; transform: translateY(-50%); }
         
-        /* 隐藏滚动条但保持可滚动 */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* 弹出动画 */
+        /* 动画与高亮 */
         @keyframes popIn {
             0% { opacity: 0; transform: translateY(10px) scale(0.98); }
             100% { opacity: 1; transform: translateY(0) scale(1); }
         }
-        .animate-pop-in {
-            animation: popIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        .animate-pop-in { animation: popIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        
+        @keyframes slideRight {
+            0% { opacity: 0; transform: translateX(-20px); }
+            100% { opacity: 1; transform: translateX(0); }
+        }
+        .animate-slide-right { animation: slideRight 0.5s ease-out forwards; }
+
+        @keyframes pulseYellow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.7); }
+            50% { box-shadow: 0 0 0 6px rgba(234, 179, 8, 0); }
+        }
+        .highlight-diff {
+            border: 3px solid #eab308 !important;
+            animation: pulseYellow 1.5s infinite;
+        }
+
+        /* 漂浮动画 */
+        @keyframes float-bob {
+            0%, 100% { transform: translateX(-50%) translateY(0) scale(var(--obj-scale, 1)); }
+            50% { transform: translateX(-50%) translateY(-6px) scale(var(--obj-scale, 1)); }
+        }
+        .is-floating {
+            animation: float-bob 2s ease-in-out infinite !important;
         }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col items-center py-10 px-4">
 
     <!-- 顶栏区域 -->
-    <header class="max-w-4xl w-full text-center mb-8">
-        <div class="inline-block bg-blue-100 text-blue-800 px-4 py-1 rounded-full text-sm font-semibold mb-4 tracking-wider">人教版五年级下册</div>
+    <header class="max-w-5xl w-full text-center mb-8">
+        <div class="inline-block bg-blue-100 text-blue-800 px-4 py-1 rounded-full text-sm font-semibold mb-4 tracking-wider">人教版五年级下册 · 深度探究版</div>
         <h1 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">探索“排水法”求体积</h1>
-        <p class="text-slate-500">像乌鸦喝水一样，利用水面的上升来计算不规则物体的体积。</p>
     </header>
 
-    <!-- 主体交互区 -->
-    <main class="max-w-4xl w-full flex flex-col gap-8">
+    <main class="max-w-6xl w-full flex flex-col gap-8">
         
-        <!-- 新增：课前导读栏目 -->
+        <!-- 课前导读栏目 -->
         <section class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 md:p-8 rounded-3xl shadow-sm border border-blue-100">
             <div class="flex flex-col md:flex-row items-center gap-8">
                 <div class="flex-1 space-y-4">
@@ -75,13 +94,9 @@
                         <span>💡</span> 课前导读：为什么要用“排水法”？
                     </h2>
                     <p class="text-slate-700 leading-relaxed text-sm md:text-base">
-                        我们已经知道，规则物体的体积可以通过公式直接计算，比如：长方体体积 = <code class="bg-white px-1.5 py-0.5 rounded text-blue-600 font-mono shadow-sm">长×宽×高</code>。
-                    </p>
-                    <p class="text-slate-700 leading-relaxed text-sm md:text-base">
-                        但是，生活中有很多像土豆、石块这样<strong>形状不规则</strong>的物体，它们没有规则的边长，我们无法直接套用公式。怎么办呢？聪明的数学家们借助了水的流动性，把不规则物体的体积巧妙地转化成了<strong>水面上升部分的体积</strong>。这就是我们今天要探索的“排水法”！
+                        规则物体可以用公式计算，但不规则物体（如土豆）没有规则的边长。聪明的数学家借助了水的流动性，把不规则物体的体积巧妙地转化成了<strong>水面上升部分的体积（等积变形）</strong>。
                     </p>
                 </div>
-                <!-- 图文对比展示 -->
                 <div class="flex items-center justify-center gap-6 bg-white/60 p-5 rounded-2xl border border-blue-100/50 shadow-sm backdrop-blur-sm">
                     <div class="text-center flex flex-col items-center">
                         <div class="w-14 h-14 bg-blue-100 rounded-lg border-2 border-blue-300 mb-2 flex items-center justify-center font-mono text-blue-600 text-xs font-bold shadow-inner">V=abh</div>
@@ -89,42 +104,54 @@
                     </div>
                     <div class="text-2xl font-black text-slate-300 italic">VS</div>
                     <div class="text-center flex flex-col items-center">
-                        <div class="w-14 h-10 potato-shape mb-2 mt-4"></div>
+                        <div class="w-14 h-10 shape-potato mb-2 mt-4"></div>
                         <span class="text-xs text-slate-600 font-medium mt-2">不规则物体</span>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- 实验与测试分栏 -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <!-- 左侧：实验模拟器 -->
-            <section class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center">
-                <h2 class="text-xl font-bold mb-8 text-slate-700">实验模拟台</h2>
+        <!-- 核心交互区 -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- 左侧：实验模拟台与数据记录 -->
+            <section class="lg:col-span-7 bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100 flex flex-col">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-slate-700">🔬 沉浸式实验台</h2>
+                    <span class="text-xs font-medium bg-amber-100 text-amber-700 px-3 py-1 rounded-full">新课标探究任务</span>
+                </div>
                 
-                <!-- 动态控制面板 -->
-                <div class="w-full bg-slate-50 p-5 rounded-2xl mb-8 flex flex-col gap-4 border border-slate-100">
+                <!-- 维度三：材质与参数控制面板 -->
+                <div class="w-full bg-slate-50 p-5 rounded-2xl mb-6 flex flex-col gap-4 border border-slate-100">
+                    <div class="flex items-center gap-4 mb-2">
+                        <label class="text-sm font-bold text-slate-700 whitespace-nowrap">实验材质：</label>
+                        <select id="material-select" class="flex-1 bg-white border border-slate-300 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 cursor-pointer shadow-sm">
+                            <option value="potato">🥔 土豆 (密度>水，沉体)</option>
+                            <option value="pingpong">🏓 乒乓球 (密度<水，浮体)</option>
+                            <option value="sugar">🧊 方糖 (溶于水，溶体)</option>
+                        </select>
+                    </div>
                     <div>
                         <label class="flex justify-between text-sm font-bold text-slate-700 mb-2">
-                            <span>初始水量</span>
+                            <span>初始水量 <span class="text-xs font-normal text-slate-400">(改变水量做多次实验)</span></span>
                             <span class="text-blue-600"><span id="label-water-vol">250</span> mL</span>
                         </label>
-                        <input type="range" id="input-water-vol" min="50" max="450" step="10" value="250" class="w-full h-2 bg-slate-300 rounded-lg cursor-pointer accent-blue-600">
+                        <input type="range" id="input-water-vol" min="50" max="400" step="10" value="250" class="w-full h-2 bg-slate-300 rounded-lg cursor-pointer accent-blue-600">
                     </div>
                     <div>
                         <label class="flex justify-between text-sm font-bold text-slate-700 mb-2">
-                            <span>土豆体积</span>
-                            <span class="text-amber-600"><span id="label-potato-vol">150</span> cm³</span>
+                            <span>物体体积</span>
+                            <span class="text-amber-600"><span id="label-obj-vol">100</span> cm³</span>
                         </label>
-                        <input type="range" id="input-potato-vol" min="20" max="300" step="10" value="150" class="w-full h-2 bg-slate-300 rounded-lg cursor-pointer accent-amber-500">
+                        <input type="range" id="input-obj-vol" min="20" max="150" step="10" value="100" class="w-full h-2 bg-slate-300 rounded-lg cursor-pointer accent-amber-500">
                     </div>
                     <div id="overflow-warning" class="text-xs text-red-500 font-medium hidden bg-red-50 p-2 rounded-lg text-center border border-red-100">
-                        ⚠️ 警告：水和土豆的总体积超过500mL，水会溢出！
+                        ⚠️ 警告：总体积超过500mL，请减小水量或物体体积！
                     </div>
                 </div>
 
-                <!-- 容器区域 -->
-                <div class="relative flex items-end h-80">
+                <!-- 容器与动画区域 -->
+                <div class="relative flex items-end justify-center h-80 bg-slate-50 rounded-2xl border border-slate-100 overflow-hidden mb-6">
                     <!-- 刻度 -->
                     <div class="relative h-64 w-12 mr-2 border-r-2 border-slate-400">
                         <div class="scale-line" style="bottom: 100%;"></div><span class="scale-text" style="bottom: 100%;">500</span>
@@ -132,349 +159,563 @@
                         <div class="scale-line" style="bottom: 60%;"></div><span class="scale-text" style="bottom: 60%;">300</span>
                         <div class="scale-line" style="bottom: 40%;"></div><span class="scale-text" style="bottom: 40%;">200</span>
                         <div class="scale-line" style="bottom: 20%;"></div><span class="scale-text" style="bottom: 20%;">100</span>
-                        <div class="scale-line" style="bottom: 0%;"></div><span class="scale-text" style="bottom: 0%;">0 mL</span>
+                        <div class="scale-line" style="bottom: 0%;"></div><span class="scale-text" style="bottom: 0%;">0</span>
                     </div>
 
                     <!-- 量杯主体 -->
                     <div class="relative w-40 h-64 border-4 border-t-0 border-slate-300 rounded-b-3xl cup-glass overflow-hidden z-10">
                         <!-- 水 -->
                         <div id="water" class="absolute bottom-0 w-full water-body" style="height: 50%;">
-                            <!-- 水波纹效果 (纯CSS简单示意) -->
                             <div class="absolute top-0 w-full h-2 bg-white/30 rounded-full blur-[1px]"></div>
                         </div>
-                        
-                        <!-- 土豆 -->
-                        <div id="potato" class="absolute left-1/2 -translate-x-1/2 w-20 h-16 potato-shape z-0" style="top: -80px;"></div>
+                        <!-- 动态物体 -->
+                        <div id="sim-object" class="absolute left-1/2 -translate-x-1/2 w-16 h-16 shape-potato z-0 flex items-center justify-center" style="top: -80px;">
+                            <span id="sugar-text" class="text-slate-400 font-bold text-xs hidden">糖</span>
+                        </div>
+                    </div>
+
+                    <!-- 维度一：水体分离与等式展示区 -->
+                    <div id="extract-panel" class="absolute right-4 bottom-8 flex flex-col items-center gap-2 opacity-0 pointer-events-none transition-opacity duration-500">
+                        <div class="text-xs font-bold text-blue-800 mb-1 bg-blue-100 px-2 py-1 rounded">体积转化 (等积变形)</div>
+                        <div class="flex items-end gap-3">
+                            <!-- 抽离出的水柱 -->
+                            <div class="flex flex-col items-center">
+                                <span id="extract-water-text" class="text-xs font-bold text-blue-600 mb-1">100mL</span>
+                                <div id="extract-water-box" class="w-12 bg-blue-400/80 border border-blue-500 shadow-inner rounded-sm" style="height: 40px;"></div>
+                            </div>
+                            <div class="text-3xl font-bold text-slate-400 mb-2">=</div>
+                            <!-- 对应的物体 -->
+                            <div class="flex flex-col items-center">
+                                <span id="extract-obj-text" class="text-xs font-bold text-amber-600 mb-1">100cm³</span>
+                                <div id="extract-obj-box" class="w-12 h-12 shape-potato scale-75"></div>
+                            </div>
+                        </div>
+                        <div class="mt-2 text-xs font-mono bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm text-slate-600">
+                            <span id="eq-final">350</span> - <span id="eq-init">250</span> = <span class="font-bold text-blue-600" id="eq-diff">100</span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- 数据面板 -->
-                <div class="mt-8 flex gap-6 text-center">
-                    <div class="bg-slate-50 p-3 rounded-xl min-w-[100px]">
-                        <div class="text-xs text-slate-400 mb-1">当前读数</div>
-                        <div class="text-xl font-bold text-blue-600"><span id="current-reading">250</span> mL</div>
-                    </div>
-                </div>
-
-                <!-- 操作按钮 -->
-                <div class="mt-6 flex gap-4">
-                    <button id="btn-drop" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors shadow-sm shadow-blue-200">
-                        放入土豆
+                <!-- 操作按钮组 -->
+                <div class="flex flex-wrap gap-3 justify-center mb-8">
+                    <button id="btn-drop" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors shadow-sm">
+                        放入物体
                     </button>
-                    <button id="btn-reset" class="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-medium transition-colors">
+                    <!-- 维度三：乒乓球专属按压按钮 -->
+                    <button id="btn-press" class="hidden px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-medium transition-colors shadow-sm animate-pulse">
+                        👇 强制按压沉底
+                    </button>
+                    <!-- 维度一：转化提取按钮 -->
+                    <button id="btn-extract" class="hidden px-5 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl font-medium transition-colors shadow-sm">
+                        🪄 提取上升的水
+                    </button>
+                    <button id="btn-reset" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-medium transition-colors">
                         重置实验
                     </button>
                 </div>
+
+                <!-- 维度二：探究记录表 -->
+                <div class="border border-slate-200 rounded-2xl overflow-hidden">
+                    <div class="bg-slate-100 px-4 py-3 border-b border-slate-200 flex justify-between items-center">
+                        <h3 class="font-bold text-slate-700 text-sm">📝 实验记录表 (填对3次发现规律)</h3>
+                        <span id="success-counter" class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold">已完成 0/3</span>
+                    </div>
+                    <table class="w-full text-sm text-center">
+                        <thead class="bg-slate-50 text-slate-500">
+                            <tr>
+                                <th class="py-2 font-medium">实验</th>
+                                <th class="py-2 font-medium">原水量(mL)</th>
+                                <th class="py-2 font-medium">现水量(mL)</th>
+                                <th class="py-2 font-medium text-blue-600">水上升体积(mL)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="record-tbody" class="divide-y divide-slate-100">
+                            <!-- 动态行 -->
+                            <tr id="empty-hint"><td colspan="4" class="py-4 text-slate-400 italic">请先调整参数并放入物体...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- 探究结论横幅 -->
+                <div id="conclusion-banner" class="hidden mt-4 bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 rounded-xl text-center shadow-sm animate-pop-in">
+                    <div class="text-xl mb-1">🎉</div>
+                    <p class="font-bold">恭喜你通过实验发现了规律！</p>
+                    <p class="text-sm mt-1">无论初始水量是多少，<strong>上升部分水的体积 总是等于 放入物体的体积</strong>。</p>
+                </div>
             </section>
 
-            <!-- 右侧：随堂测试与解析 -->
-            <section class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 flex flex-col h-[550px] overflow-y-auto no-scrollbar">
-                <h2 class="text-xl font-bold mb-2 text-slate-700">回顾与反思</h2>
-                <p class="text-sm text-slate-500 mb-6">仔细观察左侧的实验过程，点击下方序号进行思考。</p>
-
-                <!-- 问题切换按钮组 -->
-                <div class="flex gap-4 mb-6 justify-center">
-                    <button onclick="showQuestion(1)" id="btn-q1" class="w-12 h-12 rounded-full bg-blue-600 text-white font-bold text-xl shadow-md hover:bg-blue-700 transition-all focus:outline-none flex items-center justify-center scale-105">①</button>
-                    <button onclick="showQuestion(2)" id="btn-q2" class="w-12 h-12 rounded-full bg-slate-100 text-slate-500 font-bold text-xl shadow-sm hover:bg-slate-200 transition-all focus:outline-none flex items-center justify-center">②</button>
-                    <button onclick="showQuestion(3)" id="btn-q3" class="w-12 h-12 rounded-full bg-slate-100 text-slate-500 font-bold text-xl shadow-sm hover:bg-slate-200 transition-all focus:outline-none flex items-center justify-center">③</button>
-                    <button onclick="showQuestion(4)" id="btn-q4" class="w-12 h-12 rounded-full bg-amber-100 text-amber-600 font-bold text-xl shadow-sm hover:bg-amber-200 transition-all focus:outline-none flex items-center justify-center">④</button>
+            <!-- 右侧：随堂测试与解析 (含维度四) -->
+            <section class="lg:col-span-5 bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100 flex flex-col lg:h-[800px]">
+                <h2 class="text-xl font-bold mb-4 text-slate-700">🧠 回顾与进阶</h2>
+                
+                <div class="flex gap-3 mb-6">
+                    <button onclick="showQuestion(1)" id="btn-q1" class="flex-1 py-2 rounded-xl bg-blue-600 text-white font-bold text-sm shadow-md transition-all">Q1</button>
+                    <button onclick="showQuestion(2)" id="btn-q2" class="flex-1 py-2 rounded-xl bg-slate-100 text-slate-500 font-bold text-sm transition-all hover:bg-slate-200">Q2</button>
+                    <button onclick="showQuestion(3)" id="btn-q3" class="flex-1 py-2 rounded-xl bg-amber-100 text-amber-600 font-bold text-sm transition-all hover:bg-amber-200">溢水法</button>
                 </div>
 
-                <div class="space-y-6">
+                <div class="flex-1 overflow-y-auto no-scrollbar pb-4 space-y-6">
                     <!-- 题目 1 -->
-                    <div id="question-1" class="border border-slate-200 rounded-2xl p-5 hover:border-blue-300 transition-colors animate-pop-in">
-                        <h3 class="font-semibold text-slate-800 mb-2">1. 计算土豆的体积</h3>
-                        <p class="text-sm text-slate-600 mb-4">根据实验台的数据，水的初始体积是250mL，放入土豆后总体积是400mL。这个土豆的体积是多少立方厘米？</p>
+                    <div id="question-1" class="border border-slate-200 rounded-2xl p-5 animate-pop-in">
+                        <h3 class="font-semibold text-slate-800 mb-2">1. 测量条件的思考</h3>
+                        <p class="text-sm text-slate-600 mb-4">结合刚才的“乒乓球”实验，如果物体只有一半浸入水中，测算出的体积准确吗？为什么？</p>
                         <button onclick="toggleAnswer('ans-1')" class="text-sm text-blue-600 font-medium flex items-center gap-1 hover:text-blue-800">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                             显示/隐藏解析
                         </button>
                         <div id="ans-1" class="hidden mt-4 p-4 bg-blue-50 rounded-xl text-sm text-slate-700">
-                            <p class="font-bold text-blue-800 mb-1">【答案】 150 cm³</p>
-                            <p><strong>【解析】</strong> 上升部分水的体积就是土豆的体积。<br>
-                            土豆的体积 = 放入后总体积 - 水的初始体积 <br>
-                            = 400mL - 250mL = 150mL。<br>
-                            因为 1mL = 1cm³，所以土豆的体积是 150 cm³。</p>
+                            <p class="font-bold text-blue-800 mb-1">【答案】 不准确，偏小。</p>
+                            <p><strong>【解析】</strong> 排水法的前提是物体必须<strong>完全浸没</strong>在水中。乒乓球浮在水面，排开的水只是浸入那部分（水下部分）的体积，不是整个球的体积。需要用“针压法”或“坠物法”使其完全沉没。</p>
                         </div>
                     </div>
 
                     <!-- 题目 2 -->
-                    <div id="question-2" class="hidden border border-slate-200 rounded-2xl p-5 hover:border-blue-300 transition-colors">
-                        <h3 class="font-semibold text-slate-800 mb-2">2. 测量条件的思考</h3>
-                        <p class="text-sm text-slate-600 mb-4">用“排水法”求不规则物体的体积时，如果土豆有一小部分露在水面外，测算出的体积准确吗？为什么？</p>
+                    <div id="question-2" class="hidden border border-slate-200 rounded-2xl p-5">
+                        <h3 class="font-semibold text-slate-800 mb-2">2. 特殊材质的思考</h3>
+                        <p class="text-sm text-slate-600 mb-4">结合刚才的“方糖”实验，为什么冰块、盐块等不能直接用排水法测量？有什么改进办法？</p>
                         <button onclick="toggleAnswer('ans-2')" class="text-sm text-blue-600 font-medium flex items-center gap-1 hover:text-blue-800">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                             显示/隐藏解析
                         </button>
                         <div id="ans-2" class="hidden mt-4 p-4 bg-blue-50 rounded-xl text-sm text-slate-700">
-                            <p class="font-bold text-blue-800 mb-1">【答案】 不准确，会偏小。</p>
-                            <p><strong>【解析】</strong> 排水法的核心原理是物体排开的水的体积等于物体本身的体积。前提是物体必须<strong>完全浸没</strong>在水中。如果露在水面外，排开的水就只是浸入水中那部分的体积，导致测量结果比实际体积小。</p>
+                            <p class="font-bold text-blue-800 mb-1">【答案】 会融化/溶解导致体积变小。</p>
+                            <p><strong>【解析】</strong> 方糖在水中溶解后，原来占据的空间消失，水位会下降，无法读出准确体积。冰块同理。<br><strong>改进方法：</strong> 用面粉或细沙代替水，使用“排沙法”。</p>
                         </div>
                     </div>
 
-                    <!-- 题目 3 -->
-                    <div id="question-3" class="hidden border border-slate-200 rounded-2xl p-5 hover:border-blue-300 transition-colors">
-                        <h3 class="font-semibold text-slate-800 mb-2">3. 拓展与应用</h3>
-                        <p class="text-sm text-slate-600 mb-4">可以利用上面的方法直接测量乒乓球、冰块的体积吗？为什么？</p>
-                        <button onclick="toggleAnswer('ans-3')" class="text-sm text-blue-600 font-medium flex items-center gap-1 hover:text-blue-800">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                            显示/隐藏解析
-                        </button>
-                        <div id="ans-3" class="hidden mt-4 p-4 bg-blue-50 rounded-xl text-sm text-slate-700">
-                            <p class="font-bold text-blue-800 mb-1">【答案】 不能直接测量。</p>
-                            <p><strong>【解析】</strong> <br>
-                            1. <strong>乒乓球：</strong> 密度比水小，会浮在水面上，无法完全浸没排开同等体积的水。（解决办法：针压法或坠物法）。<br>
-                            2. <strong>冰块：</strong> 冰放在水中会融化，导致水和冰的总体积发生变化，无法准确测出原冰块的体积。（解决办法：用细沙代替水，使用“排沙法”测量）。</p>
-                        </div>
-                    </div>
-
-                    <!-- 题目 4 (变式题) -->
-                    <div id="question-4" class="hidden border border-amber-200 rounded-2xl p-5 hover:border-amber-400 transition-colors bg-gradient-to-br from-white to-amber-50">
-                        <h3 class="font-semibold text-amber-800 mb-2 flex items-center gap-2">
-                            <span>⭐ 4. 思维进阶：溢水法与代换</span>
-                        </h3>
-                        <p class="text-sm text-slate-600 mb-4">溢水杯中装满水。放入1个大球和1个小球，溢出 12mL 水；放入1个大球和4个小球，溢出 24mL 水。求大球的体积。</p>
+                    <!-- 维度四：溢水法与差量代换 -->
+                    <div id="question-3" class="hidden border border-amber-200 rounded-2xl p-5 bg-gradient-to-br from-white to-amber-50">
+                        <h3 class="font-semibold text-amber-800 mb-2">⭐ 3. 思维进阶：溢水与代换</h3>
+                        <p class="text-sm text-slate-600 mb-4">溢水杯装满水。放入1大球1小球，溢出12mL水；放入1大球4小球，溢出24mL水。求大球体积。</p>
                         
-                        <!-- 变式题专属：迷你交互模拟器 -->
+                        <!-- 改进的交互模拟器 -->
                         <div class="bg-white p-3 rounded-xl border border-amber-100 mb-4 shadow-sm">
                             <div class="flex justify-center gap-2 mb-3">
-                                <button onclick="simStep1()" class="px-3 py-1 bg-amber-100 hover:bg-amber-200 text-amber-700 rounded-lg text-xs font-medium transition-colors">情况一：1大1小</button>
-                                <button onclick="simStep2()" class="px-3 py-1 bg-amber-100 hover:bg-amber-200 text-amber-700 rounded-lg text-xs font-medium transition-colors">情况二：1大4小</button>
-                                <button onclick="simReset()" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-medium transition-colors">清空容器</button>
+                                <button onclick="simStep(1)" class="px-3 py-1 bg-amber-100 hover:bg-amber-200 text-amber-700 rounded-lg text-xs font-medium transition-colors">情况一：1大1小</button>
+                                <button onclick="simStep(2)" class="px-3 py-1 bg-amber-100 hover:bg-amber-200 text-amber-700 rounded-lg text-xs font-medium transition-colors">情况二：1大4小</button>
+                                <button onclick="simStep(0)" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-medium transition-colors">清空</button>
                             </div>
-                            <div class="flex justify-center items-end h-28 gap-2">
+                            <!-- 图形区 -->
+                            <div class="flex justify-center items-end h-32 gap-2 mt-4">
                                 <!-- 溢水杯 -->
-                                <div class="relative w-20 h-20 border-2 border-t-0 border-blue-200 rounded-b-md">
-                                    <div class="absolute bottom-0 w-full h-full bg-blue-100/50"></div>
+                                <div class="relative w-24 h-24 border-2 border-t-0 border-blue-300 rounded-b-lg">
+                                    <!-- 溢水杯里的水 (满的) -->
+                                    <div class="absolute bottom-0 w-full h-full bg-blue-100/60 rounded-b-md"></div>
                                     <!-- 导流管 -->
-                                    <div class="absolute -right-3 top-2 w-4 h-6 border-t-2 border-r-2 border-blue-200 rounded-tr-md"></div>
-                                    <!-- 球的容器 -->
-                                    <div id="mini-cup-balls" class="absolute bottom-1 w-full flex flex-wrap-reverse justify-center items-end gap-1 px-1"></div>
+                                    <div class="absolute -right-4 top-2 w-5 h-8 border-t-2 border-r-2 border-blue-300 rounded-tr-md"></div>
+                                    <!-- 内部球的容器 -->
+                                    <div id="mini-balls" class="absolute bottom-1 w-full flex flex-wrap-reverse justify-center items-end gap-1 px-1"></div>
                                 </div>
-                                <!-- 接水杯 -->
-                                <div class="relative w-12 h-14 border-2 border-t-0 border-blue-200 rounded-b-md ml-2 flex justify-center">
-                                    <div id="mini-spilled-water" class="absolute bottom-0 w-full h-0 bg-blue-300 transition-all duration-700"></div>
-                                    <div class="absolute -top-5 text-xs font-bold text-blue-600"><span id="mini-spilled-text">0</span>mL</div>
+                                <!-- 接水小杯 -->
+                                <div class="relative w-14 h-16 border-2 border-t-0 border-blue-300 rounded-b-lg ml-3 flex justify-center overflow-hidden">
+                                    <!-- 基础水位 -->
+                                    <div id="mini-water-base" class="absolute bottom-0 w-full bg-blue-300 transition-all duration-1000 ease-in-out" style="height: 0%;"></div>
+                                    <!-- 维度四：差量高亮水位 -->
+                                    <div id="mini-water-diff" class="absolute w-full bg-yellow-300/80 transition-all duration-1000 ease-in-out" style="bottom: 50%; height: 0%;"></div>
+                                    <div class="absolute -top-6 text-xs font-bold text-blue-600 w-max"><span id="mini-text">0</span> mL</div>
                                 </div>
                             </div>
                         </div>
 
-                        <button onclick="toggleAnswer('ans-4')" class="text-sm text-amber-600 font-medium flex items-center gap-1 hover:text-amber-800">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                        <button onclick="toggleAnswer('ans-3')" class="text-sm text-amber-600 font-medium flex items-center gap-1 hover:text-amber-800">
                             显示/隐藏解析
                         </button>
-                        <div id="ans-4" class="hidden mt-4 p-4 bg-amber-50 rounded-xl text-sm text-slate-700 border border-amber-100">
-                            <p class="font-bold text-amber-700 mb-2">【答案】 8 cm³</p>
-                            <p><strong>【解析】</strong> 对比两次实验：</p>
-                            <ul class="list-disc pl-5 mt-1 mb-2 space-y-1 text-slate-600">
-                                <li>情况一：1大 + 1小 = 12 mL</li>
-                                <li>情况二：1大 + 4小 = 24 mL</li>
-                            </ul>
-                            <p class="mb-2">我们发现，情况二比情况一<strong>多了 3 个小球</strong>，溢出的水也<strong>多了 12 mL</strong> (24 - 12 = 12)。</p>
-                            <p class="mb-2">这说明 3 个小球的体积是 12 cm³，所以 <strong>1 个小球的体积 = 12 ÷ 3 = 4 cm³</strong>。</p>
-                            <p>最后，把 1 个小球的体积代回情况一：<br>大球体积 = 12 - 4 = <strong>8 cm³</strong>。</p>
+                        <div id="ans-3" class="hidden mt-4 p-4 bg-amber-50 rounded-xl text-sm text-slate-700 border border-amber-100">
+                            <p class="font-bold text-amber-700 mb-2">【答案】 大球体积 8 cm³</p>
+                            <p><strong>【解析】观察高亮部分：</strong></p>
+                            <p class="mb-2">情况二比情况一 <span class="bg-yellow-200 px-1 rounded font-bold">多了 3 个小球</span>，<br>
+                            溢出的水也 <span class="bg-yellow-200 px-1 rounded font-bold">多了 12 mL</span> (24 - 12 = 12)。</p>
+                            <p class="mb-2">这说明 3 个小球的体积 = 12 cm³。<br>
+                            <strong>1 个小球体积 = 12 ÷ 3 = 4 cm³</strong>。</p>
+                            <p>代回情况一 (1大+1小=12)：<br>大球体积 = 12 - 4 = <strong>8 cm³</strong>。</p>
                         </div>
                     </div>
-
                 </div>
             </section>
         </div>
     </main>
 
     <script>
-        // DOM 元素获取
-        const water = document.getElementById('water');
-        const potato = document.getElementById('potato');
-        const readingDisplay = document.getElementById('current-reading');
-        const btnDrop = document.getElementById('btn-drop');
-        const btnReset = document.getElementById('btn-reset');
-
-        // 新增 DOM 控制元素
-        const inputWaterVol = document.getElementById('input-water-vol');
-        const inputPotatoVol = document.getElementById('input-potato-vol');
-        const labelWaterVol = document.getElementById('label-water-vol');
-        const labelPotatoVol = document.getElementById('label-potato-vol');
-        const overflowWarning = document.getElementById('overflow-warning');
-
-        // 状态变量定义 
-        let currentWaterVol = parseInt(inputWaterVol.value);
-        let currentPotatoVol = parseInt(inputPotatoVol.value);
-        let isPotatoIn = false;
-
-        // 更新控制面板与视图的函数
-        function updateSetup() {
-            currentWaterVol = parseInt(inputWaterVol.value);
-            currentPotatoVol = parseInt(inputPotatoVol.value);
+        // --- 核心全局状态 ---
+        const State = {
+            material: 'potato', // potato, pingpong, sugar
+            waterVol: 250,
+            objVol: 100,
+            isDropped: false,
+            isPressed: false,
+            isDissolving: false,
+            dissolveTimer: null,
+            floatTimer: null,
+            currentDisplayVol: 250,
             
-            labelWaterVol.innerText = currentWaterVol;
-            labelPotatoVol.innerText = currentPotatoVol;
+            // 探究表状态
+            recordCount: 0,
+            successCount: 0
+        };
 
-            // 检查溢出 (烧杯最大刻度500)
-            if (currentWaterVol + currentPotatoVol > 500) {
-                overflowWarning.classList.remove('hidden');
-                btnDrop.disabled = true;
-                btnDrop.classList.add('opacity-50', 'cursor-not-allowed');
+        // --- DOM 获取 ---
+        const D = {
+            matSelect: document.getElementById('material-select'),
+            inWater: document.getElementById('input-water-vol'),
+            inObj: document.getElementById('input-obj-vol'),
+            lbWater: document.getElementById('label-water-vol'),
+            lbObj: document.getElementById('label-obj-vol'),
+            warnMsg: document.getElementById('overflow-warning'),
+            
+            water: document.getElementById('water'),
+            simObj: document.getElementById('sim-object'),
+            sugarTxt: document.getElementById('sugar-text'),
+            
+            btnDrop: document.getElementById('btn-drop'),
+            btnPress: document.getElementById('btn-press'),
+            btnExtract: document.getElementById('btn-extract'),
+            btnReset: document.getElementById('btn-reset'),
+            
+            // 提取面板
+            extPanel: document.getElementById('extract-panel'),
+            extWaterBox: document.getElementById('extract-water-box'),
+            extObjBox: document.getElementById('extract-obj-box'),
+            extWText: document.getElementById('extract-water-text'),
+            extOText: document.getElementById('extract-obj-text'),
+            eqInit: document.getElementById('eq-init'),
+            eqFinal: document.getElementById('eq-final'),
+            eqDiff: document.getElementById('eq-diff'),
+            
+            // 表格
+            tbody: document.getElementById('record-tbody'),
+            empHint: document.getElementById('empty-hint'),
+            sucCount: document.getElementById('success-counter'),
+            banner: document.getElementById('conclusion-banner')
+        };
+
+        // --- 初始化与控制更新 ---
+        function initSetup() {
+            State.waterVol = parseInt(D.inWater.value);
+            State.objVol = parseInt(D.inObj.value);
+            State.material = D.matSelect.value;
+            
+            D.lbWater.innerText = State.waterVol;
+            D.lbObj.innerText = State.objVol;
+            
+            // 溢出检查 (最大500)
+            if (State.waterVol + State.objVol > 500) {
+                D.warnMsg.classList.remove('hidden');
+                D.btnDrop.disabled = true;
+                D.btnDrop.classList.add('opacity-50', 'cursor-not-allowed');
             } else {
-                overflowWarning.classList.add('hidden');
-                btnDrop.disabled = false;
-                btnDrop.classList.remove('opacity-50', 'cursor-not-allowed');
+                D.warnMsg.classList.add('hidden');
+                D.btnDrop.disabled = false;
+                D.btnDrop.classList.remove('opacity-50', 'cursor-not-allowed');
             }
 
-            // 更新土豆视觉大小 (基于体积计算缩放比例，以150cm³为基准1)
-            const scale = Math.cbrt(currentPotatoVol / 150);
-            potato.style.transform = `translateX(-50%) scale(${scale})`;
-
-            // 如果土豆不在水中，实时更新初始水位
-            if (!isPotatoIn) {
-                const heightPercent = (currentWaterVol / 500) * 100;
-                water.style.height = `${heightPercent}%`;
-                readingDisplay.innerText = currentWaterVol;
-            }
-        }
-
-        // 监听滑块拖动
-        inputWaterVol.addEventListener('input', () => {
-            if(isPotatoIn) resetExperiment(); // 若正在实验中改变参数，先自动复位
-            updateSetup();
-        });
-
-        inputPotatoVol.addEventListener('input', () => {
-            if(isPotatoIn) resetExperiment();
-            updateSetup();
-        });
-
-        // 放入土豆事件
-        btnDrop.addEventListener('click', () => {
-            if(isPotatoIn || btnDrop.disabled) return;
-            isPotatoIn = true;
+            // 更新物体外观
+            const scale = Math.cbrt(State.objVol / 100);
+            D.simObj.style.setProperty('--obj-scale', scale);
+            D.simObj.style.transform = `translateX(-50%) scale(${scale})`;
+            D.simObj.className = `absolute left-1/2 -translate-x-1/2 w-16 h-16 z-0 flex items-center justify-center shape-${State.material}`;
             
-            // 动画逻辑：土豆落下
-            potato.style.top = '140px'; // 沉入杯底
-            
-            // 动画逻辑：水面上升 
-            const finalVol = currentWaterVol + currentPotatoVol;
-            const finalPercent = (finalVol / 500) * 100;
+            D.sugarTxt.classList.toggle('hidden', State.material !== 'sugar');
 
-            setTimeout(() => {
-                water.style.height = `${finalPercent}%`;
-                // 数字滚动效果
-                animateValue(readingDisplay, currentWaterVol, finalVol, 1000);
-            }, 300);
-        });
-
-        // 重置实验逻辑封装
-        function resetExperiment() {
-            if(!isPotatoIn) return;
-            isPotatoIn = false;
-            
-            // 动画逻辑：土豆移出
-            potato.style.top = '-80px'; 
-            
-            // 动画逻辑：水面下降
-            const initialPercent = (currentWaterVol / 500) * 100;
-            const currentReading = parseInt(readingDisplay.innerText) || (currentWaterVol + currentPotatoVol);
-
-            setTimeout(() => {
-                water.style.height = `${initialPercent}%`;
-                animateValue(readingDisplay, currentReading, currentWaterVol, 1000);
-            }, 100);
-        }
-
-        // 重置实验按钮事件
-        btnReset.addEventListener('click', resetExperiment);
-
-        // 题目解析显隐切换
-        function toggleAnswer(elementId) {
-            const el = document.getElementById(elementId);
-            if (el.classList.contains('hidden')) {
-                el.classList.remove('hidden');
-                el.classList.add('animate-pop-in');
-            } else {
-                el.classList.add('hidden');
+            if (!State.isDropped) {
+                D.water.style.height = `${(State.waterVol / 500) * 100}%`;
+                State.currentDisplayVol = State.waterVol;
             }
         }
 
-        // 新增：切换题目函数
-        function showQuestion(qNum) {
-            const activeClass = "w-12 h-12 rounded-full bg-blue-600 text-white font-bold text-xl shadow-md hover:bg-blue-700 transition-all focus:outline-none flex items-center justify-center scale-105";
-            const inactiveClass = "w-12 h-12 rounded-full bg-slate-100 text-slate-500 font-bold text-xl shadow-sm hover:bg-slate-200 transition-all focus:outline-none flex items-center justify-center";
-            const specialActiveClass = "w-12 h-12 rounded-full bg-amber-500 text-white font-bold text-xl shadow-md hover:bg-amber-600 transition-all focus:outline-none flex items-center justify-center scale-105";
+        // 监听输入
+        [D.matSelect, D.inWater, D.inObj].forEach(el => {
+            el.addEventListener('input', () => {
+                if (State.isDropped) resetExp();
+                initSetup();
+            });
+        });
 
-            for(let i = 1; i <= 4; i++) {
-                const btn = document.getElementById(`btn-q${i}`);
-                const question = document.getElementById(`question-${i}`);
+        // --- 核心物理交互逻辑 ---
+        
+        // 1. 放入物体
+        D.btnDrop.addEventListener('click', () => {
+            if (State.isDropped || D.btnDrop.disabled) return;
+            State.isDropped = true;
+            D.btnDrop.classList.add('hidden');
+            
+            if (State.material === 'pingpong') {
+                // 浮体：根据当前水量和浸入体积动态计算漂浮高度
+                const partialVol = Math.round(State.objVol * 0.2); // 假设1/5没入水
+                const finalVol = State.waterVol + partialVol;
                 
-                if(i === qNum) {
-                    btn.className = (i === 4) ? specialActiveClass : activeClass;
-                    question.classList.remove('hidden');
-                    // 重置动画实现每次点击都有弹出效果
-                    question.classList.remove('animate-pop-in');
-                    void question.offsetWidth; // 触发重绘
-                    question.classList.add('animate-pop-in');
-                } else {
-                    // 第4个按钮平时用黄色底色区分
-                    btn.className = (i === 4 && qNum !== 4) ? 
-                        "w-12 h-12 rounded-full bg-amber-100 text-amber-600 font-bold text-xl shadow-sm hover:bg-amber-200 transition-all focus:outline-none flex items-center justify-center" : 
-                        inactiveClass;
-                    question.classList.add('hidden');
+                const scale = Math.cbrt(State.objVol / 100);
+                // 烧杯高256px，计算水面距离杯顶的像素值
+                const waterSurfaceTop = 256 * (1 - finalVol / 500);
+                // 保证小球底部的20%正好在水面以下
+                const ballTop = waterSurfaceTop - 32 - 19.2 * scale;
+                
+                D.simObj.style.top = `${ballTop}px`; 
+                animateWaterTo(finalVol);
+                D.btnPress.classList.remove('hidden'); // 显示强制按压
+
+                // 落下动画结束后开启漂浮效果
+                State.floatTimer = setTimeout(() => {
+                    if(State.isDropped && !State.isPressed) {
+                        D.simObj.classList.add('is-floating');
+                    }
+                }, 1000);
+            } 
+            else if (State.material === 'sugar') {
+                // 溶体：沉底 -> 水满 -> 慢慢融化
+                D.simObj.style.top = '160px'; // 沉底
+                const finalVol = State.waterVol + State.objVol;
+                animateWaterTo(finalVol);
+                
+                // 添加到表格 (记录初始放入时的状态)
+                addTableRow(State.waterVol, finalVol, State.objVol);
+                
+                // 模拟融化过程
+                setTimeout(startDissolve, 1500);
+            }
+            else {
+                // 土豆 (沉体)：沉底 -> 水满
+                D.simObj.style.top = '160px'; // 沉底
+                const finalVol = State.waterVol + State.objVol;
+                animateWaterTo(finalVol);
+                addTableRow(State.waterVol, finalVol, State.objVol);
+                
+                // 显示提取按钮
+                setTimeout(() => D.btnExtract.classList.remove('hidden'), 1000);
+            }
+        });
+
+        // 2. 乒乓球强制按压
+        D.btnPress.addEventListener('click', () => {
+            if (!State.isDropped || State.isPressed) return;
+            State.isPressed = true;
+            D.btnPress.classList.add('hidden');
+            
+            clearTimeout(State.floatTimer);
+            D.simObj.classList.remove('is-floating');
+            
+            D.simObj.style.top = '160px'; // 强行沉底
+            const finalVol = State.waterVol + State.objVol;
+            animateWaterTo(finalVol);
+            
+            addTableRow(State.waterVol, finalVol, State.objVol);
+            setTimeout(() => D.btnExtract.classList.remove('hidden'), 1000);
+        });
+
+        // 3. 方糖融化逻辑
+        function startDissolve() {
+            State.isDissolving = true;
+            let currentSugarVol = State.objVol;
+            
+            State.dissolveTimer = setInterval(() => {
+                currentSugarVol -= (State.objVol / 20); // 分20步融化
+                if (currentSugarVol <= 0) {
+                    currentSugarVol = 0;
+                    clearInterval(State.dissolveTimer);
+                    D.simObj.classList.add('hidden'); // 完全融化
                 }
+                
+                // 视觉缩放
+                const scale = Math.max(0, Math.cbrt(currentSugarVol / 100));
+                D.simObj.style.transform = `translateX(-50%) scale(${scale})`;
+                
+                // 水面回落
+                const newVol = State.waterVol + currentSugarVol;
+                D.water.style.height = `${(newVol / 500) * 100}%`;
+                State.currentDisplayVol = newVol;
+            }, 150); // 约3秒融化完
+        }
+
+        // 4. 提取上升的水 (等积变形展示)
+        D.btnExtract.addEventListener('click', () => {
+            D.btnExtract.classList.add('hidden');
+            
+            // 准备面板数据
+            D.extWText.innerText = `${State.objVol} mL`;
+            D.extOText.innerText = `${State.objVol} cm³`;
+            D.eqInit.innerText = State.waterVol;
+            D.eqFinal.innerText = State.waterVol + State.objVol;
+            D.eqDiff.innerText = State.objVol;
+            
+            // 提取水柱的视觉高度比例 (相对总杯子高度)
+            const hPercent = (State.objVol / 500) * 256; // 256px是杯子大致高度
+            D.extWaterBox.style.height = `${Math.max(20, hPercent)}px`;
+            
+            // 复制物体的形状和颜色
+            D.extObjBox.className = `w-12 h-12 scale-75 shape-${State.material}`;
+            
+            // 动画展现
+            D.extPanel.classList.remove('pointer-events-none', 'opacity-0');
+            D.extPanel.classList.add('animate-slide-right');
+        });
+
+        // 水面动画辅助函数
+        function animateWaterTo(targetVol) {
+            D.water.style.height = `${(targetVol / 500) * 100}%`;
+            State.currentDisplayVol = targetVol;
+        }
+
+        // 5. 重置实验
+        function resetExp() {
+            clearInterval(State.dissolveTimer);
+            clearTimeout(State.floatTimer);
+            State.isDropped = false;
+            State.isPressed = false;
+            State.isDissolving = false;
+            
+            D.simObj.classList.remove('is-floating');
+            D.simObj.classList.remove('hidden');
+            D.simObj.style.top = '-80px';
+            initSetup();
+            
+            D.btnDrop.classList.remove('hidden');
+            D.btnPress.classList.add('hidden');
+            D.btnExtract.classList.add('hidden');
+            
+            D.extPanel.classList.add('pointer-events-none', 'opacity-0');
+            D.extPanel.classList.remove('animate-slide-right');
+        }
+        D.btnReset.addEventListener('click', resetExp);
+
+        // --- 维度二：交互式实验记录表 ---
+        function addTableRow(initV, finalV, realDiff) {
+            if(D.empHint) D.empHint.remove();
+            State.recordCount++;
+            
+            const tr = document.createElement('tr');
+            tr.className = "border-b border-slate-100 hover:bg-slate-50 transition-colors animate-pop-in";
+            // 第四个格子是输入框
+            tr.innerHTML = `
+                <td class="py-3 text-slate-600 font-medium">${State.recordCount}</td>
+                <td class="py-3">${initV}</td>
+                <td class="py-3">${finalV}</td>
+                <td class="py-3">
+                    <div class="flex items-center justify-center gap-2">
+                        <input type="number" class="w-16 border-2 border-blue-200 rounded text-center focus:outline-none focus:border-blue-500 py-1 text-blue-700 font-bold" 
+                            placeholder="?" onchange="checkAns(this, ${realDiff})">
+                        <span class="status-icon w-5 text-lg"></span>
+                    </div>
+                </td>
+            `;
+            D.tbody.appendChild(tr);
+        }
+
+        // 校验输入
+        window.checkAns = function(inputEl, correctAns) {
+            const val = parseInt(inputEl.value);
+            const icon = inputEl.nextElementSibling;
+            if (val === correctAns) {
+                inputEl.disabled = true;
+                inputEl.classList.replace('border-blue-200', 'border-emerald-400');
+                inputEl.classList.replace('text-blue-700', 'text-emerald-600');
+                inputEl.classList.add('bg-emerald-50');
+                icon.innerText = "✅";
+                
+                State.successCount++;
+                D.sucCount.innerText = `已完成 ${State.successCount}/3`;
+                
+                // 达到3次，显示结论
+                if (State.successCount === 3) {
+                    D.banner.classList.remove('hidden');
+                    D.sucCount.classList.replace('bg-emerald-100', 'bg-emerald-500');
+                    D.sucCount.classList.replace('text-emerald-700', 'text-white');
+                }
+            } else {
+                inputEl.classList.add('border-red-400');
+                icon.innerText = "❌";
+                setTimeout(() => inputEl.classList.remove('border-red-400'), 1000);
             }
         }
 
-        // --- 新增：变式题模拟器逻辑 ---
-        function renderMiniBalls(bigCount, smallCount) {
-            const container = document.getElementById('mini-cup-balls');
-            container.innerHTML = '';
-            let html = '';
-            for(let i=0; i<bigCount; i++) {
-                html += '<div class="w-6 h-6 bg-rose-500 rounded-full border border-rose-700 shadow-sm animate-pop-in"></div>';
+        // --- 右侧面板逻辑 ---
+        window.showQuestion = function(num) {
+            [1,2,3].forEach(i => {
+                document.getElementById(`question-${i}`).classList.add('hidden');
+                document.getElementById(`btn-q${i}`).className = 
+                    "flex-1 py-2 rounded-xl bg-slate-100 text-slate-500 font-bold text-sm transition-all hover:bg-slate-200";
+            });
+            document.getElementById(`question-${num}`).classList.remove('hidden');
+            
+            // 样式区分
+            const btn = document.getElementById(`btn-q${num}`);
+            if(num === 3) {
+                btn.className = "flex-1 py-2 rounded-xl bg-amber-500 text-white font-bold text-sm shadow-md transition-all scale-105";
+            } else {
+                btn.className = "flex-1 py-2 rounded-xl bg-blue-600 text-white font-bold text-sm shadow-md transition-all scale-105";
             }
+        }
+
+        window.toggleAnswer = function(id) {
+            const el = document.getElementById(id);
+            el.classList.toggle('hidden');
+            if(!el.classList.contains('hidden')) el.classList.add('animate-pop-in');
+        }
+
+        // --- 维度四：溢水法动画逻辑 ---
+        let currentSimStep = 0;
+        window.simStep = function(step) {
+            const container = document.getElementById('mini-balls');
+            const waterBase = document.getElementById('mini-water-base');
+            const waterDiff = document.getElementById('mini-water-diff');
+            const textEl = document.getElementById('mini-text');
+            
+            container.innerHTML = ''; // 清空球
+            
+            if (step === 0) { // 清空
+                waterBase.style.height = '0%';
+                waterDiff.style.height = '0%';
+                textEl.innerText = '0';
+                currentSimStep = 0;
+                return;
+            }
+
+            // 渲染球
+            const isDiffHighlight = (currentSimStep === 1 && step === 2); // 从1到2需要高亮差值
+            let ballsHTML = '';
+            
+            // 1大球 (红色)
+            ballsHTML += `<div class="w-8 h-8 bg-rose-500 rounded-full border-2 border-rose-700 shadow-sm animate-pop-in"></div>`;
+            
+            // 小球 (粉色)
+            const smallCount = step === 1 ? 1 : 4;
             for(let i=0; i<smallCount; i++) {
-                html += '<div class="w-4 h-4 bg-rose-400 rounded-full border border-rose-600 shadow-sm animate-pop-in"></div>';
+                // 如果是从步骤1变到步骤2，后3个小球加上黄色高亮边框
+                const highlightClass = (isDiffHighlight && i >= 1) ? 'highlight-diff' : '';
+                ballsHTML += `<div class="w-5 h-5 bg-rose-300 rounded-full border border-rose-500 shadow-sm animate-pop-in ${highlightClass}"></div>`;
             }
-            container.innerHTML = html;
+            container.innerHTML = ballsHTML;
+
+            // 动画水流出 (慢动作)
+            // 先让杯里的水假装波动一下，然后右侧接水杯水位上升
+            setTimeout(() => {
+                if (step === 1) {
+                    waterBase.style.height = '50%'; // 12mL
+                    waterDiff.style.height = '0%';
+                    animateNum(textEl, parseInt(textEl.innerText), 12, 1000);
+                } else if (step === 2) {
+                    waterBase.style.height = '50%'; // 底层12mL
+                    waterDiff.style.height = '50%'; // 高亮上层12mL
+                    if(isDiffHighlight) {
+                        waterDiff.classList.add('highlight-diff');
+                    } else {
+                        waterDiff.classList.remove('highlight-diff');
+                    }
+                    animateNum(textEl, parseInt(textEl.innerText), 24, 1000);
+                }
+            }, 300);
+
+            currentSimStep = step;
         }
 
-        function simStep1() {
-            renderMiniBalls(1, 1);
-            const water = document.getElementById('mini-spilled-water');
-            const text = document.getElementById('mini-spilled-text');
-            water.style.height = '50%';
-            animateValue(text, parseInt(text.innerText), 12, 500);
-        }
-
-        function simStep2() {
-            renderMiniBalls(1, 4);
-            const water = document.getElementById('mini-spilled-water');
-            const text = document.getElementById('mini-spilled-text');
-            water.style.height = '100%';
-            animateValue(text, parseInt(text.innerText), 24, 500);
-        }
-
-        function simReset() {
-            renderMiniBalls(0, 0);
-            const water = document.getElementById('mini-spilled-water');
-            const text = document.getElementById('mini-spilled-text');
-            water.style.height = '0%';
-            animateValue(text, parseInt(text.innerText), 0, 500);
-        }
-
-        // 数字滚动计数器函数
-        function animateValue(obj, start, end, duration) {
+        function animateNum(obj, start, end, duration) {
             let startTimestamp = null;
             const step = (timestamp) => {
                 if (!startTimestamp) startTimestamp = timestamp;
                 const progress = Math.min((timestamp - startTimestamp) / duration, 1);
                 obj.innerHTML = Math.floor(progress * (end - start) + start);
-                if (progress < 1) {
-                    window.requestAnimationFrame(step);
-                }
+                if (progress < 1) window.requestAnimationFrame(step);
             };
             window.requestAnimationFrame(step);
         }
 
-        // 初始化调用
-        updateSetup();
+        // 初始化执行
+        initSetup();
     </script>
 </body>
 </html>
