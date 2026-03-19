@@ -463,18 +463,18 @@
                 const finalVol = State.waterVol + State.objVol;
                 animateWaterTo(finalVol);
                 
-                // 添加到表格 (记录初始放入时的状态)
-                addTableRow(State.waterVol, finalVol, State.objVol);
+                // 添加到表格 (记录初始放入时的状态)，指定为糖的特殊UI
+                const rowId = addTableRow(State.waterVol, finalVol, State.objVol, 'sugar');
                 
-                // 模拟融化过程
-                setTimeout(startDissolve, 1500);
+                // 模拟融化过程，传入行ID以动态更新UI
+                setTimeout(() => startDissolve(rowId), 1500);
             }
             else {
                 // 土豆 (沉体)：沉底 -> 水满
                 D.simObj.style.top = '160px'; // 沉底
                 const finalVol = State.waterVol + State.objVol;
                 animateWaterTo(finalVol);
-                addTableRow(State.waterVol, finalVol, State.objVol);
+                addTableRow(State.waterVol, finalVol, State.objVol, 'potato');
                 
                 // 显示提取按钮
                 setTimeout(() => D.btnExtract.classList.remove('hidden'), 1000);
@@ -494,14 +494,16 @@
             const finalVol = State.waterVol + State.objVol;
             animateWaterTo(finalVol);
             
-            addTableRow(State.waterVol, finalVol, State.objVol);
+            addTableRow(State.waterVol, finalVol, State.objVol, 'pingpong');
             setTimeout(() => D.btnExtract.classList.remove('hidden'), 1000);
         });
 
-        // 3. 方糖融化逻辑
-        function startDissolve() {
+        // 3. 方糖融化逻辑 (带表格动态联动)
+        function startDissolve(rowId) {
             State.isDissolving = true;
             let currentSugarVol = State.objVol;
+            const finalVEl = document.getElementById(`record-final-${rowId}`);
+            const actionEl = document.getElementById(`record-action-${rowId}`);
             
             State.dissolveTimer = setInterval(() => {
                 currentSugarVol -= (State.objVol / 20); // 分20步融化
@@ -509,6 +511,10 @@
                     currentSugarVol = 0;
                     clearInterval(State.dissolveTimer);
                     D.simObj.classList.add('hidden'); // 完全融化
+                    
+                    // 彻底溶解后，更新表格显示恢复原状
+                    if(finalVEl) finalVEl.innerHTML = `${State.waterVol} <span class="text-xs text-slate-500 font-normal"><br>(已恢复)</span>`;
+                    if(actionEl) actionEl.innerHTML = `<span class="text-red-500 font-bold text-xs">完全溶解<br>测量失败❌</span>`;
                 }
                 
                 // 视觉缩放
@@ -519,6 +525,9 @@
                 const newVol = State.waterVol + currentSugarVol;
                 D.water.style.height = `${(newVol / 500) * 100}%`;
                 State.currentDisplayVol = newVol;
+                
+                // 动态更新表格中的“现水量”数字
+                if(finalVEl && currentSugarVol > 0) finalVEl.innerText = Math.round(newVol);
             }, 150); // 约3秒融化完
         }
 
@@ -574,26 +583,38 @@
         D.btnReset.addEventListener('click', resetExp);
 
         // --- 维度二：交互式实验记录表 ---
-        function addTableRow(initV, finalV, realDiff) {
+        function addTableRow(initV, finalV, realDiff, materialType = 'potato') {
             if(D.empHint) D.empHint.remove();
             State.recordCount++;
             
             const tr = document.createElement('tr');
             tr.className = "border-b border-slate-100 hover:bg-slate-50 transition-colors animate-pop-in";
-            // 第四个格子是输入框
-            tr.innerHTML = `
-                <td class="py-3 text-slate-600 font-medium">${State.recordCount}</td>
-                <td class="py-3">${initV}</td>
-                <td class="py-3">${finalV}</td>
-                <td class="py-3">
+            
+            let finalVHtml = finalV;
+            let actionHtml = '';
+
+            // 针对不同材质设计表格内容逻辑
+            if (materialType === 'sugar') {
+                finalVHtml = `<span id="record-final-${State.recordCount}" class="font-bold text-amber-600 transition-all">${finalV}</span>`;
+                actionHtml = `<div id="record-action-${State.recordCount}" class="text-xs text-amber-500 font-bold animate-pulse">溶解中...<br>水位下降</div>`;
+            } else {
+                actionHtml = `
                     <div class="flex items-center justify-center gap-2">
                         <input type="number" class="w-16 border-2 border-blue-200 rounded text-center focus:outline-none focus:border-blue-500 py-1 text-blue-700 font-bold" 
                             placeholder="?" onchange="checkAns(this, ${realDiff})">
                         <span class="status-icon w-5 text-lg"></span>
                     </div>
-                </td>
+                `;
+            }
+
+            tr.innerHTML = `
+                <td class="py-3 text-slate-600 font-medium">${State.recordCount}</td>
+                <td class="py-3">${initV}</td>
+                <td class="py-3">${finalVHtml}</td>
+                <td class="py-3">${actionHtml}</td>
             `;
             D.tbody.appendChild(tr);
+            return State.recordCount;
         }
 
         // 校验输入
