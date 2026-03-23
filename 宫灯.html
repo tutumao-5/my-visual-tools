@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>宫灯表面积交互推演</title>
+    <!-- 引入 Tailwind CSS 进行 UI 布局 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Three.js 进行 3D 渲染 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; background-color: #f8fafc; }
+        #canvas-container { width: 100%; height: 100%; cursor: grab; }
+        #canvas-container:active { cursor: grabbing; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        }
+        .step-btn { transition: all 0.3s ease; }
+        .step-btn.active { background-color: #f97316; color: white; border-color: #ea580c; transform: scale(1.05); }
+        .math-font { font-family: 'Cambria Math', 'Times New Roman', serif; }
+        
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .panel-container { position: absolute; bottom: 0; width: 100%; height: 50vh; border-radius: 24px 24px 0 0; }
+            #canvas-container { height: 50vh; }
+        }
+    </style>
+</head>
+<body class="flex flex-col md:flex-row h-screen">
+
+    <!-- 左侧/上方：3D 可视化区域 -->
+    <div class="relative w-full md:w-3/5 h-1/2 md:h-full bg-slate-100 flex items-center justify-center overflow-hidden">
+        <div id="canvas-container"></div>
+        <div class="absolute top-4 left-4 glass-panel px-4 py-2 rounded-lg text-slate-600 text-sm flex items-center shadow-sm">
+            <svg class="w-5 h-5 mr-2 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
+            提示：可拖拽旋转图形，滚轮缩放
+        </div>
+    </div>
+
+    <!-- 右侧/下方：交互式讲解面板 -->
+    <div class="panel-container w-full md:w-2/5 h-1/2 md:h-full glass-panel z-10 flex flex-col p-6 md:p-8 overflow-y-auto">
+        <h1 class="text-2xl font-bold text-slate-800 mb-2 flex items-center">
+            <span class="bg-orange-100 text-orange-600 p-2 rounded-lg mr-3">💡</span>
+            宫灯表面积破解指南
+        </h1>
+        <p class="text-slate-500 text-sm mb-6 border-b pb-4">人教版五年级下册 - 组合图形的表面积计算</p>
+
+        <!-- 步骤控制器 -->
+        <div class="flex space-x-2 mb-6">
+            <button onclick="setStep(1)" id="btn-1" class="step-btn active flex-1 py-2 px-1 text-sm border-2 border-slate-200 rounded-lg font-medium text-slate-600 hover:border-orange-300">1. 观察结构</button>
+            <button onclick="setStep(2)" id="btn-2" class="step-btn flex-1 py-2 px-1 text-sm border-2 border-slate-200 rounded-lg font-medium text-slate-600 hover:border-orange-300">2. 锁定侧面</button>
+            <button onclick="setStep(3)" id="btn-3" class="step-btn flex-1 py-2 px-1 text-sm border-2 border-slate-200 rounded-lg font-medium text-slate-600 hover:border-orange-300">3. 面积计算</button>
+            <button onclick="setStep(4)" id="btn-4" class="step-btn flex-1 py-2 px-1 text-sm border-2 border-slate-200 rounded-lg font-medium text-slate-600 hover:border-orange-300">4. 单位与总价</button>
+        </div>
+
+        <!-- 步骤内容显示区 -->
+        <div class="flex-1">
+            
+            <!-- Step 1 -->
+            <div id="content-1" class="step-content space-y-4 animate-fade-in">
+                <h2 class="text-lg font-bold text-slate-800">步骤一：图形拆解</h2>
+                <p class="text-slate-600 leading-relaxed">
+                    遇到复杂的组合图形，我们要先将它“拆”成熟悉的形状。<br>
+                    观察右图，这个宫灯可以看作是由 <strong class="text-orange-600">上、下两个长方体</strong> 组合而成的：
+                </p>
+                <div class="bg-slate-50 p-4 rounded-lg border border-slate-100">
+                    <ul class="space-y-2 text-sm text-slate-700">
+                        <li><span class="inline-block w-3 h-3 bg-amber-600 rounded-sm mr-2"></span><b>上部长方体：</b> 长 66cm，宽 66cm，高 20cm</li>
+                        <li><span class="inline-block w-3 h-3 bg-amber-400 rounded-sm mr-2"></span><b>下部长方体：</b> 长 46cm，宽 46cm，高 80cm</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div id="content-2" class="step-content hidden space-y-4 animate-fade-in">
+                <h2 class="text-lg font-bold text-slate-800">步骤二：理解“上、下面除外”</h2>
+                <p class="text-slate-600 leading-relaxed">
+                    题目中非常关键的条件是：<span class="bg-yellow-100 text-yellow-800 px-1 rounded font-bold">外侧有一层饰面（上、下面除外）</span>。
+                </p>
+                <p class="text-slate-600 leading-relaxed">
+                    这意味着所有水平方向的面（无论顶面还是底面）都不需要贴饰面。我们只需要计算两个长方体竖直方向的<strong class="text-orange-600">四周侧面积</strong>。
+                </p>
+                <div class="bg-orange-50 p-4 rounded-lg border border-orange-100 text-orange-800 text-sm font-medium">
+                    你看，在左侧 3D 视图中，变透明的面就是不需要计算的，高亮的橙色面就是我们要计算的！
+                </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div id="content-3" class="step-content hidden space-y-4 animate-fade-in">
+                <h2 class="text-lg font-bold text-slate-800">步骤三：计算单个宫灯饰面面积</h2>
+                <div class="space-y-3 text-slate-700">
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                        <p class="text-sm font-bold text-slate-800 mb-1">📐 上部侧面积（4个面）：</p>
+                        <p class="math-font text-lg text-orange-600">66 × 20 × 4 = 5280 (cm²)</p>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                        <p class="text-sm font-bold text-slate-800 mb-1">📐 下部侧面积（4个面）：</p>
+                        <p class="math-font text-lg text-orange-600">46 × 80 × 4 = 14720 (cm²)</p>
+                    </div>
+                    <div class="bg-orange-50 p-3 rounded-lg border border-orange-200">
+                        <p class="text-sm font-bold text-slate-800 mb-1">✨ 单个宫灯总侧面积：</p>
+                        <p class="math-font text-lg text-orange-600 font-bold">5280 + 14720 = 20000 (cm²)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4 -->
+            <div id="content-4" class="step-content hidden space-y-4 animate-fade-in">
+                <h2 class="text-lg font-bold text-slate-800">步骤四：单位换算与最终总价</h2>
+                <div class="bg-red-50 p-4 rounded-lg border-l-4 border-red-500 mb-4">
+                    <p class="font-bold text-red-700 text-sm flex items-center mb-1">
+                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        易错点提醒
+                    </p>
+                    <p class="text-red-600 text-sm">面积单位是 cm²，而价格单位是 m²，必须先换算单位！进率是 10000。</p>
+                </div>
+                
+                <ul class="space-y-4 text-slate-700">
+                    <li class="flex items-start">
+                        <span class="bg-slate-200 text-slate-600 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 shrink-0">1</span>
+                        <div>
+                            <p class="text-sm font-bold">单位换算：</p>
+                            <p class="math-font text-orange-600 text-lg">20000 cm² = 2 m²</p>
+                        </div>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="bg-slate-200 text-slate-600 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 shrink-0">2</span>
+                        <div>
+                            <p class="text-sm font-bold">25 个宫灯的总面积：</p>
+                            <p class="math-font text-orange-600 text-lg">2 × 25 = 50 (m²)</p>
+                        </div>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="bg-orange-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-3 shrink-0">3</span>
+                        <div>
+                            <p class="text-sm font-bold">总花费：</p>
+                            <p class="math-font text-orange-600 text-xl font-bold">50 × 18 = 900 (元)</p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // === 3D 场景初始化 ===
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        // 设置背景为透明或浅色
+        scene.background = new THREE.Color(0xf1f5f9); 
+        
+        // 增加环境光和平行光让模型更有立体感
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        directionalLight.position.set(100, 200, 100);
+        scene.add(directionalLight);
+
+        const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 1, 1000);
+        camera.position.set(150, 150, 250);
+        camera.lookAt(0, 0, 0); // 修复点 1：让相机镜头强制对准场景中心 (0,0,0)
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        // === 材质定义 ===
+        // 区分两个长方体的颜色
+        const topColor = 0xd97706;    // 深木色/琥珀色 (对应上部)
+        const bottomColor = 0xfbbf24; // 浅木色/明黄色 (对应下部)
+        const highlightColor = 0xf97316; // 高亮侧面颜色
+        
+        // 材质工厂：引入 baseColor 参数
+        function createMaterials(state, baseColor) {
+            // state: 'full' (完整显示), 'sides_only' (只高亮侧面，上下透明)
+            const sideMat = new THREE.MeshLambertMaterial({ 
+                color: state === 'sides_only' ? highlightColor : baseColor,
+                transparent: true,
+                opacity: 0.95
+            });
+            const topBottomMat = new THREE.MeshLambertMaterial({
+                color: baseColor,
+                transparent: true,
+                opacity: state === 'sides_only' ? 0.1 : 0.95,
+                depthWrite: state !== 'sides_only' // 透明时关闭深度写入避免渲染顺序问题
+            });
+            
+            return [sideMat, sideMat, topBottomMat, topBottomMat, sideMat, sideMat];
+        }
+
+        // --- 添加 3D 文本标签工具函数 ---
+        function createLabel(text) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 128;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            
+            // 绘制文字白边（增加可读性）
+            ctx.font = 'bold 32px "PingFang SC", "Microsoft YaHei", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.lineWidth = 6;
+            ctx.strokeStyle = 'white';
+            ctx.strokeText(text, 64, 32);
+            
+            // 绘制深色文字
+            ctx.fillStyle = '#334155';
+            ctx.fillText(text, 64, 32);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            // 禁用深度测试，让标签始终显示在最上层不被模型遮挡
+            const material = new THREE.SpriteMaterial({ map: texture, depthTest: false });
+            const sprite = new THREE.Sprite(material);
+            sprite.scale.set(24, 12, 1);
+            return sprite;
+        }
+
+        // === 创建模型 ===
+        const group = new THREE.Group();
+        scene.add(group);
+
+        // 边框材质，让长方体轮廓更清晰
+        const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x78350f, linewidth: 2 });
+
+        // 上部长方体 (66x66x20)
+        const topGeo = new THREE.BoxGeometry(66, 20, 66);
+        const topMesh = new THREE.Mesh(topGeo, createMaterials('full', topColor));
+        const topEdges = new THREE.LineSegments(new THREE.EdgesGeometry(topGeo), edgeMaterial);
+        topMesh.add(topEdges);
+        
+        // 添加上部尺寸标签
+        const topLabels = new THREE.Group();
+        const lblTopL = createLabel('长66');
+        lblTopL.position.set(0, -10, 33 + 6); // 前侧底部中心
+        const lblTopW = createLabel('宽66');
+        lblTopW.position.set(33 + 6, -10, 0); // 右侧底部中心
+        const lblTopH = createLabel('高20');
+        lblTopH.position.set(33 + 6, 0, 33 + 6); // 前右侧垂直中心
+        topLabels.add(lblTopL, lblTopW, lblTopH);
+        topMesh.add(topLabels);
+        
+        // 位置：下部长方体高80，中心在0。顶面在 Y=40。上部长方体高20，中心需在 40 + 10 = 50。
+        topMesh.position.y = 50; 
+        group.add(topMesh);
+
+        // 下部长方体 (46x46x80)
+        const bottomGeo = new THREE.BoxGeometry(46, 80, 46);
+        const bottomMesh = new THREE.Mesh(bottomGeo, createMaterials('full', bottomColor));
+        const bottomEdges = new THREE.LineSegments(new THREE.EdgesGeometry(bottomGeo), edgeMaterial);
+        bottomMesh.add(bottomEdges);
+        
+        // 添加下部尺寸标签
+        const bottomLabels = new THREE.Group();
+        const lblBotL = createLabel('长46');
+        lblBotL.position.set(0, -40, 23 + 6);
+        const lblBotW = createLabel('宽46');
+        lblBotW.position.set(23 + 6, -40, 0);
+        const lblBotH = createLabel('高80');
+        lblBotH.position.set(23 + 6, 0, 23 + 6);
+        bottomLabels.add(lblBotL, lblBotW, lblBotH);
+        bottomMesh.add(bottomLabels);
+        
+        bottomMesh.position.y = 0;
+        group.add(bottomMesh);
+
+        // 调整组的位置，使其居中
+        group.position.y = -25;
+
+        // === 交互与动画 ===
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        let targetRotation = { x: 0.2, y: -0.5 }; // 初始角度
+        let currentRotation = { x: 0.2, y: -0.5 };
+        
+        // 目标动画状态
+        let targetTopY = 50;
+
+        // 鼠标拖拽事件
+        function handleDragStart(x, y) {
+            isDragging = true;
+            previousMousePosition = { x, y };
+        }
+        function handleDragMove(x, y) {
+            if (isDragging) {
+                const deltaMove = { x: x - previousMousePosition.x, y: y - previousMousePosition.y };
+                targetRotation.y += deltaMove.x * 0.01;
+                targetRotation.x += deltaMove.y * 0.01;
+                
+                // 限制 X 轴旋转角度，防止翻转过去
+                targetRotation.x = Math.max(-Math.PI/2 + 0.1, Math.min(Math.PI/2 - 0.1, targetRotation.x));
+            }
+            previousMousePosition = { x, y };
+        }
+        function handleDragEnd() { isDragging = false; }
+
+        // 绑定鼠标和触摸事件
+        container.addEventListener('mousedown', (e) => handleDragStart(e.offsetX, e.offsetY));
+        container.addEventListener('mousemove', (e) => handleDragMove(e.offsetX, e.offsetY));
+        container.addEventListener('mouseup', handleDragEnd);
+        container.addEventListener('mouseleave', handleDragEnd);
+
+        container.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // 阻止默认滚动
+            handleDragStart(e.touches[0].clientX, e.touches[0].clientY);
+        }, { passive: false });
+        container.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            handleDragMove(e.touches[0].clientX, e.touches[0].clientY);
+        }, { passive: false });
+        container.addEventListener('touchend', handleDragEnd);
+
+        // 自适应窗口缩放
+        window.addEventListener('resize', () => {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        });
+
+        // 渲染循环
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // 缓动旋转 (加入一点阻尼感)
+            currentRotation.x += (targetRotation.x - currentRotation.x) * 0.1;
+            currentRotation.y += (targetRotation.y - currentRotation.y) * 0.1;
+            group.rotation.x = currentRotation.x;
+            group.rotation.y = currentRotation.y;
+
+            // 如果没有拖拽，让它自己缓慢自转
+            if (!isDragging) {
+                targetRotation.y += 0.002;
+            }
+
+            // 缓动位移（用于拆解动画）
+            topMesh.position.y += (targetTopY - topMesh.position.y) * 0.1;
+
+            renderer.render(scene, camera);
+        }
+        
+        // 修复点 2：确保页面完整加载、DOM 元素尺寸确定后再启动渲染
+        window.onload = function () {
+            // 重新校准画布宽高，防止因为 Flex 布局导致初始宽高为 0
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            
+            // 启动动画循环
+            animate();
+        };
+
+        // === UI 逻辑控制 ===
+        function setStep(step) {
+            // 更新按钮样式
+            document.querySelectorAll('.step-btn').forEach((btn, index) => {
+                if (index + 1 === step) {
+                    btn.classList.add('active', 'bg-orange-500', 'text-white', 'border-orange-500');
+                    btn.classList.remove('bg-white', 'text-slate-600', 'border-slate-200');
+                } else {
+                    btn.classList.remove('active', 'bg-orange-500', 'text-white', 'border-orange-500');
+                    btn.classList.add('bg-white', 'text-slate-600', 'border-slate-200');
+                }
+            });
+
+            // 更新内容显示
+            document.querySelectorAll('.step-content').forEach((content, index) => {
+                content.style.display = (index + 1 === step) ? 'block' : 'none';
+            });
+
+            // 更新 3D 模型状态
+            if (step === 1) {
+                targetTopY = 50; // 组合在一起
+                topMesh.material = createMaterials('full', topColor);
+                bottomMesh.material = createMaterials('full', bottomColor);
+                topLabels.visible = true;
+                bottomLabels.visible = true;
+            } else if (step === 2 || step === 3) {
+                targetTopY = 65; // 微拆解，展示结构
+                topMesh.material = createMaterials('sides_only', topColor);
+                bottomMesh.material = createMaterials('sides_only', bottomColor);
+                topLabels.visible = true;
+                bottomLabels.visible = true;
+            } else if (step === 4) {
+                targetTopY = 50; // 恢复组合
+                topMesh.material = createMaterials('sides_only', topColor);
+                bottomMesh.material = createMaterials('sides_only', bottomColor);
+                topLabels.visible = true;
+                bottomLabels.visible = true;
+            }
+        }
+    </script>
+</body>
+</html>
