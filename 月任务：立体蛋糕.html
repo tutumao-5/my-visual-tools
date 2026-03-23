@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数学可视化 - 组合体表面积与体积</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- 必须引入 CSS2DRenderer 以支持 DOM 元素标注 -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        #canvas-container { width: 100vw; height: 100vh; }
+        .control-panel { position: absolute; top: 20px; right: 20px; width: 520px; max-height: 90vh; overflow-y: auto; }
+        .data-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); padding: 24px; border: 1px solid #e2e8f0; position: relative; }
+        .btn { transition: all 0.2s; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .btn:active { transform: translateY(0); }
+        .math-font { font-family: 'Times New Roman', Times, serif; font-style: italic; }
+        
+        /* 尺寸标签样式 */
+        .dimension-label {
+            background: rgba(255, 255, 255, 0.9);
+            color: #334155;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            border: 1px solid #cbd5e1;
+            pointer-events: none;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            white-space: nowrap;
+        }
+        .dimension-label span { color: #db2777; font-size: 14px; }
+        
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+<div id="canvas-container"></div>
+
+<!-- 增加交互提示 -->
+<div class="absolute bottom-6 left-6 bg-white/90 backdrop-blur-sm px-5 py-3 rounded-xl shadow-lg border border-slate-200 text-base text-slate-700 pointer-events-none flex items-center z-10">
+    <span class="text-xl mr-2">🖱️</span> 提示：按住鼠标左键拖动可旋转视角，滑动滚轮可放大缩小
+</div>
+
+<!-- 唤出面板按钮 (默认隐藏) -->
+<button id="btn-show-panel" class="absolute top-5 right-5 z-20 bg-white/95 backdrop-blur-sm shadow-lg rounded-xl px-5 py-3 text-slate-700 font-bold border border-slate-200 hover:bg-slate-50 transition-all hidden flex items-center">
+    <span class="text-xl mr-2">📝</span> 打开解析面板
+</button>
+
+<!-- 右侧功能主面板 -->
+<div id="main-panel" class="control-panel z-10 transition-opacity duration-300">
+    <div class="data-card">
+        <!-- 面板关闭按钮 -->
+        <button id="btn-close-panel" class="absolute top-5 right-5 text-slate-400 hover:text-slate-700 transition-colors p-1" title="隐藏面板">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+
+        <h1 class="text-3xl font-bold text-slate-800 mb-3">🎂 立体蛋糕解析器</h1>
+        <p class="text-base text-slate-500 mb-6">示例数据：底层(20×20×8), 中层(14×14×8), 顶层(8×8×8)</p>
+
+        <!-- 视角与结构控制 -->
+        <div class="mb-8">
+            <h2 class="text-lg font-semibold text-slate-700 mb-4 flex items-center">
+                <span class="w-1.5 h-5 bg-indigo-500 rounded-full mr-2"></span> 交互探索
+            </h2>
+            <div class="grid grid-cols-2 gap-4">
+                <button id="btn-explode" class="btn bg-indigo-50 text-indigo-600 border border-indigo-200 py-3 rounded-xl text-base font-bold shadow-sm">
+                    拆解模型 (看隐藏面)
+                </button>
+                <button id="btn-assemble" class="btn bg-white text-slate-600 border border-slate-200 py-3 rounded-xl text-base font-bold shadow-sm hover:bg-slate-50">
+                    组合模型
+                </button>
+                <button id="btn-topview" class="btn bg-rose-50 text-rose-600 border border-rose-200 py-3 rounded-xl text-base font-bold shadow-sm">
+                    俯视投影 (看顶面)
+                </button>
+                <button id="btn-reset" class="btn bg-white text-slate-600 border border-slate-200 py-3 rounded-xl text-base font-bold shadow-sm hover:bg-slate-50">
+                    重置视角
+                </button>
+            </div>
+        </div>
+
+        <!-- 折叠区域：任务一 -->
+        <div class="mb-4">
+            <button id="btn-task1" class="w-full text-left bg-slate-50 p-4 rounded-xl border-2 border-slate-200 shadow-sm flex justify-between items-center hover:bg-slate-100 transition-colors">
+                <span class="font-bold text-slate-800 text-xl flex items-center">📦 任务一：计算体积</span>
+                <span id="icon-task1" class="transform transition-transform duration-300 text-slate-500">▼</span>
+            </button>
+            
+            <div id="content-task1" class="hidden mt-3 bg-slate-50 p-6 rounded-xl border-2 border-slate-200 shadow-inner">
+                <p class="text-base text-slate-600 mb-4">无论如何堆叠，总体积等于三个长方体体积之和。</p>
+                <div class="text-base text-slate-700 bg-white p-5 rounded-xl border border-slate-200 font-mono leading-loose">
+                    V = V₁ + V₂ + V₃<br>
+                    V = (20×20×8) + (14×14×8) + (8×8×8)<br>
+                    V = 3200 + 1568 + 512 = <span class="text-indigo-600 font-bold text-2xl">5280 cm³</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 折叠区域：任务二 -->
+        <div class="mb-2">
+            <button id="btn-task2" class="w-full text-left bg-rose-50 p-4 rounded-xl border-2 border-rose-200 shadow-sm flex justify-between items-center hover:bg-rose-100 transition-colors">
+                <span class="font-bold text-slate-800 text-xl flex items-center">🎨 任务二：计算涂奶油面积</span>
+                <span id="icon-task2" class="transform transition-transform duration-300 text-rose-500">▼</span>
+            </button>
+            
+            <div id="content-task2" class="hidden mt-3 bg-rose-50 p-6 rounded-xl border-2 border-rose-200 shadow-inner">
+                <!-- 解法1 -->
+                <div class="mb-5 bg-white p-5 rounded-xl border border-rose-100 shadow-sm">
+                    <p class="text-base font-bold text-rose-700 mb-2">解法一：扣除法（点击"拆解模型"观察）</p>
+                    <p class="text-base text-slate-600 mb-3">深灰色代表被遮挡不涂奶油的面：底面、两次重叠面。</p>
+                    <div class="text-base text-slate-700 font-mono leading-loose bg-slate-50 p-3 rounded-lg">
+                        S = 三表面积总和 - (底面 + 2×下重叠 + 2×上重叠)<br>
+                        重叠扣除 = 400 + 2×(14×14) + 2×(8×8) = 920<br>
+                        S = (1440+840+384) - 920 = <span class="text-rose-600 font-bold text-2xl">1744 cm²</span>
+                    </div>
+                </div>
+
+                <!-- 解法2 -->
+                <div class="bg-white p-5 rounded-xl border border-rose-100 shadow-sm">
+                    <p class="text-base font-bold text-rose-700 mb-2">解法二：投影法（点击"俯视投影"观察）</p>
+                    <p class="text-base text-slate-600 mb-3">从上方看，三个露出的顶面拼起来刚好等于最底层顶面。因此涂色面积 = 最底面顶面积 + 三个盒子的侧面积之和。</p>
+                    <div class="text-base text-slate-700 font-mono leading-loose bg-slate-50 p-3 rounded-lg">
+                        S = 底层顶面 + (S侧₁ + S侧₂ + S侧₃)<br>
+                        S = (20×20) + (640 + 448 + 256)<br>
+                        S = 400 + 1344 = <span class="text-rose-600 font-bold text-2xl">1744 cm²</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+<script>
+    // --- 场景初始化 ---
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('#f8fafc');
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(40, 30, 50);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    container.appendChild(renderer.domElement);
+
+    // --- CSS2D 渲染器 (用于尺寸标签) ---
+    const labelRenderer = new THREE.CSS2DRenderer();
+    labelRenderer.setSize(window.innerWidth, window.innerHeight);
+    labelRenderer.domElement.style.position = 'absolute';
+    labelRenderer.domElement.style.top = '0px';
+    labelRenderer.domElement.style.pointerEvents = 'none'; // 允许点击穿透到底层canvas
+    document.body.appendChild(labelRenderer.domElement);
+
+    // 控制器绑定到底层 renderer
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.maxPolarAngle = Math.PI / 2 - 0.05; // 防止转到地下
+
+    // --- 灯光 ---
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
+
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+    dirLight.position.set(20, 50, 20);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 2048;
+    dirLight.shadow.mapSize.height = 2048;
+    scene.add(dirLight);
+
+    // --- 材质定义 ---
+    const frostingMaterial = new THREE.MeshStandardMaterial({ 
+        color: '#f472b6', // 粉色奶油
+        roughness: 0.7,
+        metalness: 0.1
+    });
+    
+    const hiddenMaterial = new THREE.MeshStandardMaterial({ 
+        color: '#64748b', // 深灰色（重叠隐藏部分）
+        roughness: 0.9,
+    });
+
+    const baseMaterial = new THREE.MeshStandardMaterial({ 
+        color: '#fdfbfb', 
+        roughness: 0.8 
+    });
+
+    // --- 创建模型 ---
+    const boxes = [];
+    const targets = []; // 用于动画的目标位置
+
+    // 辅助函数：创建尺寸标签
+    function createLabel(text, x, y, z) {
+        const div = document.createElement('div');
+        div.className = 'dimension-label';
+        div.innerHTML = text;
+        const label = new THREE.CSS2DObject(div);
+        label.position.set(x, y, z);
+        return label;
+    }
+
+    function createCakeLayer(w, h, d, yPos, isTopLayer) {
+        const geometry = new THREE.BoxGeometry(w, h, d);
+        // 面顺序: right, left, top, bottom, front, back
+        const materials = [
+            frostingMaterial, frostingMaterial, // 侧面
+            frostingMaterial, // 顶面 (稍后用平面遮挡重叠部分)
+            hiddenMaterial,   // 底面 (总是被遮挡)
+            frostingMaterial, frostingMaterial  // 侧面
+        ];
+        
+        const mesh = new THREE.Mesh(geometry, materials);
+        mesh.position.set(0, yPos, 0);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+
+        // 添加几何边线，提升立体感
+        const edges = new THREE.EdgesGeometry(geometry);
+        const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xc4b5fd, linewidth: 2, transparent: true, opacity: 0.8 }));
+        mesh.add(line);
+
+        // 添加长宽高标注
+        const labelOffset = 0.5; // 稍微偏移避免重合
+        mesh.add(createLabel(`长 <span>${w}</span>`, 0, -h/2, d/2 + labelOffset));
+        mesh.add(createLabel(`宽 <span>${d}</span>`, w/2 + labelOffset, -h/2, 0));
+        mesh.add(createLabel(`高 <span>${h}</span>`, w/2 + labelOffset, 0, d/2 + labelOffset));
+
+        scene.add(mesh);
+        return mesh;
+    }
+
+    // 1. 底层
+    const box1 = createCakeLayer(20, 8, 20, 4, false);
+    box1.userData.baseY = 4;
+    
+    // 2. 中层
+    const box2 = createCakeLayer(14, 8, 14, 12, false);
+    box2.userData.baseY = 12;
+
+    // 3. 顶层
+    const box3 = createCakeLayer(8, 8, 8, 20, true);
+    box3.userData.baseY = 20;
+
+    boxes.push(box1, box2, box3);
+
+    // --- 创建重叠面标示 (深灰色平面贴图) ---
+    function createOverlapPlane(w, d, yPos) {
+        const geometry = new THREE.PlaneGeometry(w, d);
+        const mesh = new THREE.Mesh(geometry, hiddenMaterial);
+        mesh.rotation.x = -Math.PI / 2;
+        mesh.position.set(0, yPos, 0);
+        mesh.receiveShadow = true;
+        scene.add(mesh);
+        return mesh;
+    }
+
+    // 底层顶部的重叠印记
+    const overlap1 = createOverlapPlane(14, 14, 8.01); 
+    overlap1.userData.parentBox = box1;
+    overlap1.userData.offsetY = 4.01;
+
+    // 中层顶部的重叠印记
+    const overlap2 = createOverlapPlane(8, 8, 16.01);
+    overlap2.userData.parentBox = box2;
+    overlap2.userData.offsetY = 4.01;
+
+    const overlaps = [overlap1, overlap2];
+
+    // 添加桌面辅助线
+    const gridHelper = new THREE.GridHelper(60, 20, '#cbd5e1', '#f1f5f9');
+    scene.add(gridHelper);
+
+    // --- 动画逻辑 ---
+    let targetCameraPos = camera.position.clone();
+    let isExploded = false;
+    let explodeGap = 15;
+    let isCameraAnimating = false; // 控制相机是否处于自动动画状态
+
+    function lerp(start, end, amt) {
+        return (1 - amt) * start + amt * end;
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        
+        // 相机平滑过渡：仅在处于自动动画状态时执行
+        if (isCameraAnimating) {
+            camera.position.lerp(targetCameraPos, 0.05);
+            // 当足够接近目标位置时，自动停止平滑过渡
+            if (camera.position.distanceTo(targetCameraPos) < 0.5) {
+                isCameraAnimating = false;
+            }
+        }
+        
+        // 盒子拆解/组合平滑过渡
+        boxes.forEach((box, index) => {
+            let targetY = box.userData.baseY;
+            if (isExploded) {
+                targetY += index * explodeGap;
+            }
+            box.position.y = lerp(box.position.y, targetY, 0.1);
+        });
+
+        // 重叠印记跟随
+        overlaps.forEach(overlap => {
+            overlap.position.y = overlap.userData.parentBox.position.y + overlap.userData.offsetY;
+        });
+
+        controls.update();
+        renderer.render(scene, camera);
+        labelRenderer.render(scene, camera); // 渲染标签
+    }
+    animate();
+
+    // --- 交互事件绑定 ---
+    
+    // UI 面板显隐逻辑
+    const mainPanel = document.getElementById('main-panel');
+    const btnShowPanel = document.getElementById('btn-show-panel');
+    const btnClosePanel = document.getElementById('btn-close-panel');
+
+    btnClosePanel.addEventListener('click', () => {
+        mainPanel.classList.add('hidden');
+        btnShowPanel.classList.remove('hidden');
+    });
+
+    btnShowPanel.addEventListener('click', () => {
+        mainPanel.classList.remove('hidden');
+        btnShowPanel.classList.add('hidden');
+    });
+
+    // 任务手风琴折叠逻辑
+    function setupAccordion(btnId, contentId, iconId) {
+        const btn = document.getElementById(btnId);
+        const content = document.getElementById(contentId);
+        const icon = document.getElementById(iconId);
+        
+        btn.addEventListener('click', () => {
+            content.classList.toggle('hidden');
+            // 切换箭头方向
+            if (content.classList.contains('hidden')) {
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                icon.style.transform = 'rotate(180deg)';
+            }
+        });
+    }
+
+    setupAccordion('btn-task1', 'content-task1', 'icon-task1');
+    setupAccordion('btn-task2', 'content-task2', 'icon-task2');
+
+    // 3D 视角控制逻辑
+    controls.addEventListener('start', () => {
+        isCameraAnimating = false;
+    });
+
+    document.getElementById('btn-explode').addEventListener('click', () => {
+        isExploded = true;
+        targetCameraPos.set(30, 40, 60);
+        isCameraAnimating = true;
+    });
+
+    document.getElementById('btn-assemble').addEventListener('click', () => {
+        isExploded = false;
+        targetCameraPos.set(40, 30, 50);
+        isCameraAnimating = true;
+    });
+
+    document.getElementById('btn-topview').addEventListener('click', () => {
+        isExploded = false;
+        targetCameraPos.set(0, 60, 0);
+        controls.target.set(0, 0, 0);
+        isCameraAnimating = true;
+    });
+
+    document.getElementById('btn-reset').addEventListener('click', () => {
+        isExploded = false;
+        targetCameraPos.set(40, 30, 50);
+        controls.target.set(0, 0, 0);
+        isCameraAnimating = true;
+    });
+
+    // 窗口自适应
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        labelRenderer.setSize(window.innerWidth, window.innerHeight);
+    });
+</script>
+</body>
+</html>
