@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>探索图形 - 五年级数学3D可视化工具</title>
+    <!-- 引入 Tailwind CSS 进行现代 UI 布局 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Three.js 及其控制器 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        #canvas-container { width: 100%; height: 100%; }
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .control-panel { box-shadow: 4px 0 15px rgba(0,0,0,0.1); }
+        .data-table th, .data-table td { border: 1px solid #e2e8f0; text-align: center; padding: 0.5rem; }
+        .data-table th { background-color: #f1f5f9; font-weight: 600; }
+        
+        /* 颜色指示器 */
+        .color-box { display: inline-block; width: 16px; height: 16px; border-radius: 4px; vertical-align: middle; margin-right: 6px; border: 1px solid rgba(0,0,0,0.2); }
+        .c-3face { background-color: #ef4444; } /* 红 */
+        .c-2face { background-color: #3b82f6; } /* 蓝 */
+        .c-1face { background-color: #22c55e; } /* 绿 */
+        .c-0face { background-color: #f59e0b; } /* 橙 */
+        .c-all { background-color: #8b5cf6; }   /* 紫 */
+        
+        /* 隐藏和提示交互样式 */
+        .formula-placeholder { display: inline-block; padding: 2px 8px; background-color: #e2e8f0; color: #64748b; border-radius: 4px; font-size: 0.75rem; cursor: pointer; transition: all 0.2s; }
+        .row-hover:hover { background-color: rgba(0,0,0,0.05) !important; cursor: pointer; }
+        .row-hover:hover .formula-placeholder { background-color: #cbd5e1; color: #334155; }
+    </style>
+</head>
+<body class="flex h-screen w-full">
+
+    <!-- 左侧控制面板 -->
+    <div class="w-1/3 md:w-96 bg-white flex flex-col h-full control-panel z-10 overflow-y-auto">
+        
+        <div class="p-5 bg-blue-600 text-white">
+            <h1 class="text-2xl font-bold flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M11 17a1 1 0 001.447.894l4-2A1 1 0 0017 15V9.236a1 1 0 00-1.447-.894l-4 2a1 1 0 00-.553.894V17zM15.211 6.276a1 1 0 000-1.788l-4.764-2.382a1 1 0 00-.894 0L4.789 4.488a1 1 0 000 1.788l4.764 2.382a1 1 0 00.894 0l4.764-2.382zM4.447 8.342A1 1 0 003 9.236V15a1 1 0 00.553.894l4 2A1 1 0 009 17v-5.764a1 1 0 00-.553-.894l-4-2z" />
+                </svg>
+                探索图形
+            </h1>
+            <p class="text-blue-100 text-sm mt-1">五年级下册数学 - 3D可视化教具</p>
+        </div>
+
+        <div class="p-5 flex-1 flex flex-col gap-6">
+            
+            <!-- 讲解推导面板 (移动到顶部显眼位置) -->
+            <div id="explanation-panel" class="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 shadow-sm rounded-r text-sm text-gray-800 leading-relaxed transition-all duration-300">
+                <div class="flex items-center mb-2">
+                    <svg class="w-5 h-5 text-blue-600 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span class="font-bold text-blue-800 text-base">方法解析</span>
+                </div>
+                <div id="explanation-text" class="text-gray-500 italic">👆 请点击下方“规律总结表”中的对应行，这里将为您显示详细的推导过程和3D空间动画。</div>
+            </div>
+
+            <!-- 滑块控制 -->
+            <div class="space-y-4">
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="font-bold text-gray-700">大正方体棱长等分数 (n)</label>
+                        <span id="n-value" class="px-2 py-1 bg-blue-100 text-blue-800 rounded font-bold">3</span>
+                    </div>
+                    <input type="range" id="n-slider" min="2" max="15" value="3" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                    <p class="text-xs text-gray-400 mt-1">支持 n=2 到 n=15 (当前生成的方块总数：<span id="total-cubes-text">27</span>)</p>
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="font-bold text-gray-700">视图拆解 (间距调整)</label>
+                        <span id="spacing-value" class="text-gray-500 text-sm">紧凑</span>
+                    </div>
+                    <input type="range" id="spacing-slider" min="1" max="2.5" step="0.05" value="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-500">
+                    <p class="text-xs text-gray-500 mt-1">💡 教学提示：拉动此滑块，可以“炸开”图形，直观看到内部没有涂色的方块！</p>
+                </div>
+            </div>
+
+            <hr class="border-gray-200">
+
+            <!-- 涂色分类筛选 -->
+            <div>
+                <label class="font-bold text-gray-700 block mb-3">观察特定涂色方块</label>
+                <div class="grid grid-cols-1 gap-2">
+                    <button class="filter-btn active w-full text-left px-4 py-2 rounded-md border-2 border-purple-500 bg-purple-50 text-purple-700 font-medium transition-colors" data-filter="all">
+                        <div class="color-box c-all"></div> 全部显示
+                    </button>
+                    <button class="filter-btn w-full text-left px-4 py-2 rounded-md border-2 border-transparent bg-gray-50 hover:bg-red-50 text-gray-700 hover:text-red-700 transition-colors" data-filter="3">
+                        <div class="color-box c-3face"></div> 三面涂色 (位于顶点)
+                    </button>
+                    <button class="filter-btn w-full text-left px-4 py-2 rounded-md border-2 border-transparent bg-gray-50 hover:bg-blue-50 text-gray-700 hover:text-blue-700 transition-colors" data-filter="2">
+                        <div class="color-box c-2face"></div> 两面涂色 (位于棱中间)
+                    </button>
+                    <button class="filter-btn w-full text-left px-4 py-2 rounded-md border-2 border-transparent bg-gray-50 hover:bg-green-50 text-gray-700 hover:text-green-700 transition-colors" data-filter="1">
+                        <div class="color-box c-1face"></div> 一面涂色 (位于面中间)
+                    </button>
+                    <button class="filter-btn w-full text-left px-4 py-2 rounded-md border-2 border-transparent bg-gray-50 hover:bg-yellow-50 text-gray-700 hover:text-yellow-700 transition-colors" data-filter="0">
+                        <div class="color-box c-0face"></div> 没有涂色 (位于内部中心)
+                    </button>
+                </div>
+            </div>
+
+            <!-- 数据表格 -->
+            <div class="mt-auto">
+                <h3 class="font-bold text-gray-700 mb-2">规律总结表 <span class="text-xs font-normal text-gray-500">(点击行查看规律与推导)</span></h3>
+                <table class="w-full data-table text-sm">
+                    <thead>
+                        <tr>
+                            <th>涂色情况</th>
+                            <th>位置</th>
+                            <th>计算规律</th>
+                            <th>个数</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="bg-red-50 text-red-900 row-hover" data-row-type="3">
+                            <td>三面</td>
+                            <td>顶点</td>
+                            <td>
+                                <span class="formula-placeholder" id="p-3face">点击查看</span>
+                                <span id="f-3face" class="hidden font-mono font-bold">8</span>
+                            </td>
+                            <td id="t-3face" class="font-bold">8</td>
+                        </tr>
+                        <tr class="bg-blue-50 text-blue-900 row-hover" data-row-type="2">
+                            <td>两面</td>
+                            <td>棱中间</td>
+                            <td>
+                                <span class="formula-placeholder" id="p-2face">点击查看</span>
+                                <span id="f-2face" class="hidden font-mono font-bold">12 × (3-2)</span>
+                            </td>
+                            <td id="t-2face" class="font-bold">12</td>
+                        </tr>
+                        <tr class="bg-green-50 text-green-900 row-hover" data-row-type="1">
+                            <td>一面</td>
+                            <td>面中间</td>
+                            <td>
+                                <span class="formula-placeholder" id="p-1face">点击查看</span>
+                                <span id="f-1face" class="hidden font-mono font-bold">6 × (3-2)²</span>
+                            </td>
+                            <td id="t-1face" class="font-bold">6</td>
+                        </tr>
+                        <tr class="bg-yellow-50 text-yellow-900 row-hover" data-row-type="0">
+                            <td>零面</td>
+                            <td>中心</td>
+                            <td>
+                                <span class="formula-placeholder" id="p-0face">点击查看</span>
+                                <span id="f-0face" class="hidden font-mono font-bold">(3-2)³</span>
+                            </td>
+                            <td id="t-0face" class="font-bold">1</td>
+                        </tr>
+                        <tr class="bg-gray-100 font-bold">
+                            <td colspan="2">总计 (n³)</td>
+                            <td id="f-total" class="font-mono text-gray-500">3 × 3 × 3</td>
+                            <td id="t-total">27</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <button id="reset-cam" class="w-full py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded font-medium transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1 -mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                重置视角
+            </button>
+        </div>
+    </div>
+
+    <!-- 右侧 3D 渲染区域 -->
+    <div id="canvas-container" class="relative flex-1 bg-gradient-to-br from-gray-100 to-gray-300">
+        <!-- 3D 场景画布将附加在这里 -->
+        <div class="absolute top-4 right-4 bg-white/80 backdrop-blur px-4 py-2 rounded-lg shadow pointer-events-none text-sm text-gray-600">
+            鼠标左键拖动：旋转视角 | 滚轮：缩放 | 右键拖动：平移
+        </div>
+    </div>
+
+    <script>
+        // --- UI 逻辑与状态管理 ---
+        let currentN = 3;
+        let currentSpacing = 1.0;
+        let currentFilter = 'all';
+
+        const nSlider = document.getElementById('n-slider');
+        const nValue = document.getElementById('n-value');
+        const spacingSlider = document.getElementById('spacing-slider');
+        const spacingValue = document.getElementById('spacing-value');
+        const totalCubesText = document.getElementById('total-cubes-text');
+        
+        const filterBtns = document.querySelectorAll('.filter-btn');
+
+        // --- Three.js 场景设置 ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        // 配合 UI 的渐变背景，场景背景设为透明，由 CSS 控制
+        
+        const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+
+        // 光照设置：提供清晰的立体感
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+        
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(10, 20, 10);
+        scene.add(dirLight);
+        
+        const backLight = new THREE.DirectionalLight(0xffffff, 0.3);
+        backLight.position.set(-10, -10, -10);
+        scene.add(backLight);
+
+        // 主机组，用于存放所有小正方体
+        const cubeGroup = new THREE.Group();
+        scene.add(cubeGroup);
+
+        // 材质定义，匹配我们在 PPT 中通常使用的分类颜色
+        const materials = {
+            3: new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.3, metalness: 0.1 }), // 红色：顶点（3面）
+            2: new THREE.MeshStandardMaterial({ color: 0x3b82f6, roughness: 0.3, metalness: 0.1 }), // 蓝色：棱中间（2面）
+            1: new THREE.MeshStandardMaterial({ color: 0x22c55e, roughness: 0.3, metalness: 0.1 }), // 绿色：面中间（1面）
+            0: new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.3, metalness: 0.1 }), // 橙黄：中心（0面）
+            hidden: new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.05, depthWrite: false }) // 半透明隐藏态
+        };
+
+        const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x1e293b, linewidth: 1 });
+
+        // --- 核心：生成正方体网格 ---
+        function generateCubes(n) {
+            // 清理旧场景
+            while(cubeGroup.children.length > 0) { 
+                cubeGroup.remove(cubeGroup.children[0]); 
+            }
+
+            const offset = (n - 1) / 2;
+            const cubeSize = 1;
+            const geometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+            const edgesGeo = new THREE.EdgesGeometry(geometry);
+
+            let count3 = 0, count2 = 0, count1 = 0, count0 = 0;
+
+            for (let x = 0; x < n; x++) {
+                for (let y = 0; y < n; y++) {
+                    for (let z = 0; z < n; z++) {
+                        // 判断位于边缘的维度数量
+                        let edgeCount = 0;
+                        if (x === 0 || x === n - 1) edgeCount++;
+                        if (y === 0 || y === n - 1) edgeCount++;
+                        if (z === 0 || z === n - 1) edgeCount++;
+
+                        // 创建网格
+                        const material = materials[edgeCount].clone(); // 克隆以便后续单独修改透明度
+                        const mesh = new THREE.Mesh(geometry, material);
+                        
+                        // 创建边缘线（描边，让方块清晰可辨）
+                        const edges = new THREE.LineSegments(edgesGeo, edgeMaterial);
+                        mesh.add(edges);
+
+                        // 计算位置并保存基础信息用于后续的“炸开”动画和筛选
+                        const posX = (x - offset);
+                        const posY = (y - offset);
+                        const posZ = (z - offset);
+                        
+                        mesh.position.set(posX, posY, posZ);
+                        
+                        mesh.userData = {
+                            originalPos: new THREE.Vector3(posX, posY, posZ),
+                            type: edgeCount, // 3, 2, 1, 0
+                            edges: edges,
+                            baseMaterial: materials[edgeCount]
+                        };
+
+                        cubeGroup.add(mesh);
+
+                        // 统计数量（也可以直接用数学公式，这里顺便验证）
+                        if (edgeCount === 3) count3++;
+                        else if (edgeCount === 2) count2++;
+                        else if (edgeCount === 1) count1++;
+                        else count0++;
+                    }
+                }
+            }
+
+            // 更新 UI 表格与信息
+            updateDataTable(n, count3, count2, count1, count0);
+            
+            // 重置摄像机位置适应物体大小
+            const cameraDist = Math.max(n * 1.5, 6);
+            camera.position.set(cameraDist, cameraDist * 0.8, cameraDist);
+            camera.lookAt(0, 0, 0);
+            controls.target.set(0, 0, 0);
+
+            // 应用当前的拆解和过滤状态
+            applySpacing(currentSpacing);
+            applyFilter(currentFilter);
+        }
+
+        // --- 交互逻辑：更新数据表 ---
+        function updateDataTable(n, c3, c2, c1, c0) {
+            totalCubesText.textContent = n * n * n;
+            
+            document.getElementById('t-3face').textContent = c3;
+            document.getElementById('t-2face').textContent = c2;
+            document.getElementById('t-1face').textContent = c1;
+            document.getElementById('t-0face').textContent = c0;
+            document.getElementById('t-total').textContent = n * n * n;
+
+            // 更新公式展示 (无论是否隐藏都在后台准备好数据)
+            document.getElementById('f-3face').textContent = '8';
+            document.getElementById('f-2face').textContent = n > 2 ? `12 × (${n}-2)` : '0';
+            document.getElementById('f-1face').textContent = n > 2 ? `6 × (${n}-2)²` : '0';
+            document.getElementById('f-0face').textContent = n > 2 ? `(${n}-2)³` : '0';
+            document.getElementById('f-total').textContent = `${n} × ${n} × ${n}`;
+        }
+
+        // --- 规律解析内容库 ---
+        const explanations = {
+            '3': "<strong>位置：</strong>大正方体的8个顶点。<br><strong>推导：</strong>任何正方体都有且仅有8个顶点，因此无论大正方体被分成多少等份，三面涂色的小正方体永远固定是 <strong>8</strong> 个。",
+            '2': "<strong>位置：</strong>大正方体的12条棱的中间部分。<br><strong>推导：</strong>每条棱的总长为 n。去掉两端已经被计入“三面涂色”的2个顶点，每条棱上剩下 (n-2) 个。因为正方体有12条棱，所以总计为 <strong>12 × (n-2)</strong> 个。",
+            '1': "<strong>位置：</strong>大正方体6个面的正中间部分。<br><strong>推导：</strong>每个面是一个 n×n 的正方形。去掉最外围的一圈（属于2面和3面），中间部分是一个边长为 (n-2) 的小正方形，个数为 (n-2)²。因为有6个面，所以总计 <strong>6 × (n-2)²</strong> 个。",
+            '0': "<strong>位置：</strong>大正方体的内部核心。<br><strong>推导：</strong>把大正方体最外层的一层“皮”全部剥掉，里面剩下的刚好是一个长、宽、高都减少了2（前后、左右、上下各减1）的内部小正方体。这个内部正方体的棱长是 (n-2)，所以总个数是体积 <strong>(n-2)³</strong>。"
+        };
+
+        // --- 绑定表格行点击事件（显示规律和解析） ---
+        document.querySelectorAll('.row-hover').forEach(row => {
+            row.addEventListener('click', () => {
+                const type = row.getAttribute('data-row-type');
+                
+                // 1. 隐藏“点击查看”按钮，显示真实公式
+                const placeholder = document.getElementById(`p-${type}face`);
+                const formula = document.getElementById(`f-${type}face`);
+                if(placeholder) placeholder.style.display = 'none';
+                if(formula) formula.classList.remove('hidden');
+
+                // 2. 更新顶部详细解析面板
+                const panel = document.getElementById('explanation-panel');
+                const textContainer = document.getElementById('explanation-text');
+                textContainer.classList.remove('text-gray-500', 'italic');
+                textContainer.innerHTML = explanations[type];
+                
+                // 3. 联动：在3D视图中自动高亮显示这一类方块
+                const filterBtn = document.querySelector(`.filter-btn[data-filter="${type}"]`);
+                if(filterBtn) filterBtn.click();
+            });
+        });
+
+        // --- 交互逻辑：应用视图拆解 (爆炸效果) ---
+        function applySpacing(spacing) {
+            cubeGroup.children.forEach(cube => {
+                const orig = cube.userData.originalPos;
+                cube.position.copy(orig).multiplyScalar(spacing);
+            });
+        }
+
+        // --- 交互逻辑：应用分类筛选 ---
+        function applyFilter(filterType) {
+            cubeGroup.children.forEach(cube => {
+                const type = cube.userData.type;
+                if (filterType === 'all' || parseInt(filterType) === type) {
+                    cube.material = cube.userData.baseMaterial;
+                    cube.userData.edges.visible = true;
+                } else {
+                    // 当处于筛选状态时，未被选中的方块变成极度透明，作为背景参考
+                    cube.material = materials.hidden;
+                    cube.userData.edges.visible = false;
+                }
+            });
+        }
+
+        // --- 事件监听 ---
+        nSlider.addEventListener('input', (e) => {
+            currentN = parseInt(e.target.value);
+            nValue.textContent = currentN;
+            generateCubes(currentN);
+        });
+
+        spacingSlider.addEventListener('input', (e) => {
+            currentSpacing = parseFloat(e.target.value);
+            spacingValue.textContent = currentSpacing === 1.0 ? '紧凑' : `拆解 x${currentSpacing.toFixed(1)}`;
+            applySpacing(currentSpacing);
+        });
+
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                // UI 状态更新
+                filterBtns.forEach(b => {
+                    b.classList.remove('border-purple-500', 'border-red-500', 'border-blue-500', 'border-green-500', 'border-yellow-500', 'bg-purple-50', 'bg-red-50', 'bg-blue-50', 'bg-green-50', 'bg-yellow-50');
+                    b.classList.add('border-transparent', 'bg-gray-50');
+                });
+                
+                const target = e.currentTarget;
+                currentFilter = target.dataset.filter;
+                
+                // 应用选中的样式
+                target.classList.remove('border-transparent', 'bg-gray-50');
+                if(currentFilter === 'all') target.classList.add('border-purple-500', 'bg-purple-50');
+                if(currentFilter === '3') target.classList.add('border-red-500', 'bg-red-50');
+                if(currentFilter === '2') target.classList.add('border-blue-500', 'bg-blue-50');
+                if(currentFilter === '1') target.classList.add('border-green-500', 'bg-green-50');
+                if(currentFilter === '0') target.classList.add('border-yellow-500', 'bg-yellow-50');
+
+                applyFilter(currentFilter);
+            });
+        });
+
+        document.getElementById('reset-cam').addEventListener('click', () => {
+            const cameraDist = Math.max(currentN * 1.5, 6);
+            
+            // 简单的动画平滑过渡回初始视角
+            const startPos = camera.position.clone();
+            const endPos = new THREE.Vector3(cameraDist, cameraDist * 0.8, cameraDist);
+            let alpha = 0;
+            
+            function animateCamera() {
+                alpha += 0.05;
+                if (alpha <= 1) {
+                    camera.position.lerpVectors(startPos, endPos, alpha);
+                    camera.lookAt(0, 0, 0);
+                    controls.target.set(0, 0, 0);
+                    requestAnimationFrame(animateCamera);
+                }
+            }
+            animateCamera();
+        });
+
+        // 窗口大小适配
+        window.addEventListener('resize', () => {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        });
+
+        // --- 渲染循环 ---
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update(); // 必须调用，以支持 damping (惯性)
+            renderer.render(scene, camera);
+        }
+
+        // 初始化
+        window.onload = () => {
+            generateCubes(currentN);
+            animate();
+        };
+
+    </script>
+</body>
+</html>
