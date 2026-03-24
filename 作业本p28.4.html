@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>容积与折叠动态演示</title>
+    <style>
+        :root {
+            /* 基础单位设定：1cm = 8px */
+            --u: 8px; 
+            --box-l: calc(45 * var(--u)); /* 360px */
+            --box-w: calc(35 * var(--u)); /* 280px */
+            --cut-s: calc(5 * var(--u));  /* 40px */
+            
+            --base-l: calc(35 * var(--u)); /* 280px */
+            --base-w: calc(25 * var(--u)); /* 200px */
+
+            /* 配色方案 */
+            --primary: #4F46E5;
+            --primary-light: #818CF8;
+            --secondary: #10B981;
+            --accent: #F59E0B;
+            --bg-color: #F3F4F6;
+            --text-main: #1F2937;
+            --card-bg: #FFFFFF;
+        }
+
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 { font-size: 2.5rem; margin-bottom: 10px; color: var(--primary); text-align: center; }
+        .subtitle { font-size: 1.5rem; color: #6B7280; margin-bottom: 30px; }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 1200px;
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            overflow: hidden;
+            border: 2px solid #E5E7EB;
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: row;
+            min-height: 550px;
+        }
+
+        /* 左侧：3D演示区 */
+        .visual-area {
+            flex: 1;
+            background: #FAFAFA;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 1200px; 
+            border-right: 2px solid #E5E7EB;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 右侧：解题面板 */
+        .text-area {
+            flex: 1;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .step-title { font-size: 2.2rem; font-weight: bold; color: var(--primary); margin-bottom: 20px; }
+        .step-desc { font-size: 1.8rem; line-height: 1.6; margin-bottom: 20px; }
+        .highlight { color: #DC2626; font-weight: bold; background: #FEE2E2; padding: 2px 8px; border-radius: 8px; }
+
+        /* 底部：控制台 */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            padding: 25px 40px;
+            background: #F9FAFB;
+            border-top: 2px solid #E5E7EB;
+        }
+
+        button {
+            font-size: 1.5rem;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .btn-prev { background: #E5E7EB; color: #4B5563; }
+        .btn-prev:hover { background: #D1D5DB; }
+        
+        .btn-next { background: var(--primary); color: white; box-shadow: 0 4px 6px rgba(79, 70, 229, 0.3); }
+        .btn-next:hover { background: #4338CA; transform: translateY(-2px); }
+        .btn-next:disabled { background: #9CA3AF; cursor: not-allowed; transform: none; box-shadow: none;}
+
+        /* 3D 纸板结构 */
+        .scene {
+            position: relative;
+            width: var(--box-l);
+            height: var(--box-w);
+            transform-style: preserve-3d;
+            transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .view-2d { transform: rotateX(0deg) rotateZ(0deg); }
+        .view-3d { transform: rotateX(60deg) rotateZ(-30deg) translateY(50px); }
+
+        .face {
+            position: absolute;
+            background: var(--primary-light);
+            border: 2px solid #312E81;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: white;
+            transition: all 1.2s ease;
+            transform-style: preserve-3d;
+            box-sizing: border-box;
+        }
+
+        .base {
+            width: var(--base-l);
+            height: var(--base-w);
+            left: var(--cut-s);
+            top: var(--cut-s);
+            background: var(--primary);
+            z-index: 1;
+        }
+
+        .flap-top { width: var(--base-l); height: var(--cut-s); left: var(--cut-s); top: 0; transform-origin: bottom; }
+        .flap-bottom { width: var(--base-l); height: var(--cut-s); left: var(--cut-s); bottom: 0; transform-origin: top; }
+        .flap-left { width: var(--cut-s); height: var(--base-w); left: 0; top: var(--cut-s); transform-origin: right; }
+        .flap-right { width: var(--cut-s); height: var(--base-w); right: 0; top: var(--cut-s); transform-origin: left; }
+
+        .corner {
+            position: absolute;
+            width: var(--cut-s);
+            height: var(--cut-s);
+            background: #FECACA;
+            border: 2px dashed #EF4444;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1rem;
+            color: #DC2626;
+            transition: opacity 0.5s ease, transform 0.8s ease;
+            box-sizing: border-box;
+            z-index: 2;
+        }
+        .c-tl { top: 0; left: 0; }
+        .c-tr { top: 0; right: 0; }
+        .c-bl { bottom: 0; left: 0; }
+        .c-br { bottom: 0; right: 0; }
+
+        .folded .flap-top { transform: rotateX(-90deg); background: #6366F1; }
+        .folded .flap-bottom { transform: rotateX(90deg); background: #6366F1; }
+        .folded .flap-left { transform: rotateY(90deg); background: #4F46E5; }
+        .folded .flap-right { transform: rotateY(-90deg); background: #4F46E5; }
+        .folded .base { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); }
+        .cut-out .corner { opacity: 0; transform: scale(0.5) translateY(20px); pointer-events: none;}
+
+        /* ====== 第一步：外部原尺寸标注线 ====== */
+        .dim-line {
+            position: absolute; display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; color: #1F2937; font-weight: bold;
+            transition: opacity 0.5s ease; pointer-events: none;
+        }
+        .dim-l {
+            bottom: -35px; left: 0; width: 100%; border-top: 2px solid #6B7280;
+        }
+        .dim-l::before, .dim-l::after {
+            content: ''; position: absolute; top: -8px; height: 14px; width: 2px; background: #6B7280;
+        }
+        .dim-l::before { left: 0; } .dim-l::after { right: 0; }
+        
+        .dim-w {
+            right: -35px; top: 0; height: 100%; border-left: 2px solid #6B7280; flex-direction: column;
+        }
+        .dim-w::before, .dim-w::after {
+            content: ''; position: absolute; left: -8px; width: 14px; height: 2px; background: #6B7280;
+        }
+        .dim-w::before { top: 0; } .dim-w::after { bottom: 0; }
+        
+        .dim-text { background: #FAFAFA; padding: 0 10px; transform: translateY(-50%); }
+        .dim-w .dim-text { padding: 10px 0; transform: translateX(-50%); writing-mode: vertical-lr; letter-spacing: 2px; }
+
+
+        /* ====== 第二步：精确对齐的“内部计算标注线” (拒绝中间堆砌) ====== */
+        .dim-inner-l {
+            position: absolute; display: flex; align-items: center; justify-content: center;
+            /* 严格对齐内部裁切后的长度边界 */
+            bottom: -35px; left: var(--cut-s); width: var(--base-l); 
+            border-top: 2px dashed #DC2626; opacity: 0; transition: opacity 0.5s ease; pointer-events: none;
+        }
+        .dim-inner-l::before, .dim-inner-l::after {
+            content: ''; position: absolute; top: -8px; height: 14px; width: 2px; background: #DC2626;
+        }
+        .dim-inner-l::before { left: 0; } .dim-inner-l::after { right: 0; }
+
+        .dim-inner-w {
+            position: absolute; display: flex; align-items: center; justify-content: center; flex-direction: column;
+            /* 严格对齐内部裁切后的宽度边界 */
+            right: -35px; top: var(--cut-s); height: var(--base-w);
+            border-left: 2px dashed #DC2626; opacity: 0; transition: opacity 0.5s ease; pointer-events: none;
+        }
+        .dim-inner-w::before, .dim-inner-w::after {
+            content: ''; position: absolute; left: -8px; width: 14px; height: 2px; background: #DC2626;
+        }
+        .dim-inner-w::before { top: 0; } .dim-inner-w::after { bottom: 0; }
+
+        .dim-inner-text {
+            background: #FEE2E2; color: #DC2626; padding: 4px 12px; border-radius: 6px;
+            font-size: 1.3rem; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transform: translateY(-50%); white-space: nowrap; z-index: 10;
+        }
+        .dim-inner-w .dim-inner-text {
+            transform: translateX(-50%); padding: 12px 6px; writing-mode: vertical-lr; letter-spacing: 2px;
+        }
+
+        /* 外部指向性的：角部高度说明标签 */
+        .cut-height-arrow {
+            position: absolute; right: 120%; top: 50%; transform: translateY(-50%);
+            font-size: 1.3rem; color: #065F46; background: #D1FAE5; padding: 6px 10px;
+            border-radius: 6px; font-weight: bold; opacity: 0; transition: opacity 0.5s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; align-items: center; white-space: nowrap;
+            border: 1px solid #34D399; pointer-events: none;
+        }
+        .cut-height-arrow::after { content: '→'; margin-left: 8px; font-weight: bold; color: #059669; }
+
+
+        /* ====== 第三步：折叠后的 3D 贴边标签 (留空中间区域) ====== */
+        .face-label {
+            position: absolute; font-size: 1.3rem; color: #FFFFFF;
+            background: rgba(220, 38, 38, 0.95); padding: 4px 12px; border-radius: 6px;
+            font-weight: bold; opacity: 0; transition: opacity 0.5s ease;
+            white-space: nowrap; pointer-events: none; z-index: 10;
+        }
+        .flap-label { background: rgba(16, 185, 129, 0.95); } 
+        
+        /* 严丝合缝地贴在面的边缘，而不是中间 */
+        #lbl-base-l { bottom: 6px; left: 50%; transform: translateX(-50%); }
+        #lbl-base-w { left: 6px; top: 50%; transform: translateY(-50%); writing-mode: vertical-lr; letter-spacing: 2px; padding: 12px 6px;}
+        #lbl-flap-h { top: 6px; left: 50%; transform: translateX(-50%); font-size: 1.2rem; }
+
+        /* 练习题面板 */
+        .practice-panel {
+            display: none; flex-direction: column; justify-content: center; height: 100%;
+            background: #ECFDF5; padding: 40px; border-radius: 16px; border: 2px solid #34D399;
+        }
+        .practice-panel.active { display: flex; }
+        .practice-title { font-size: 2.2rem; color: #065F46; font-weight: bold; margin-bottom: 20px;}
+        .practice-q { font-size: 1.8rem; line-height: 1.6; color: #064E3B; margin-bottom: 30px;}
+        
+        .answer-box {
+            display: none; margin-top: 20px; padding: 20px; background: white; border-radius: 12px;
+            border-left: 6px solid var(--secondary); font-size: 1.6rem; line-height: 1.8;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        
+        .btn-toggle-ans { background: var(--secondary); color: white; align-self: flex-start; }
+        .btn-toggle-ans:hover { background: #059669; }
+    </style>
+</head>
+<body>
+
+    <h1>📦 长方体容积与折叠可视化教学</h1>
+    <div class="subtitle">人教版五年级下册 —— 空间与图形</div>
+
+    <div class="container">
+        <div class="main-content">
+            <!-- 可视化演示区 -->
+            <div class="visual-area" id="visualArea">
+                <div class="scene view-2d" id="scene">
+                    <!-- 底面 -->
+                    <div class="face base" id="baseFace">
+                        <!-- 第三步：3D贴边长宽标注 -->
+                        <span class="face-label" id="lbl-base-l"></span>
+                        <span class="face-label" id="lbl-base-w"></span>
+                    </div>
+                    <!-- 四个侧面 -->
+                    <div class="face flap-top"></div>
+                    <div class="face flap-bottom">
+                        <!-- 第三步：3D侧面高贴边标注 -->
+                        <span class="face-label flap-label" id="lbl-flap-h"></span>
+                    </div>
+                    <div class="face flap-left"></div>
+                    <div class="face flap-right"></div>
+                    
+                    <!-- 四个切角 -->
+                    <div class="corner c-tl">
+                        5×5
+                        <!-- 第二步：切口高度指向箭头 -->
+                        <div class="cut-height-arrow" id="cutHeightLabel">转化为高: 5 cm</div>
+                    </div>
+                    <div class="corner c-tr">5×5</div>
+                    <div class="corner c-bl">5×5</div>
+                    <div class="corner c-br">5×5</div>
+
+                    <!-- 第一步：外部原整体长宽标注线 -->
+                    <div class="dim-line dim-l" id="totalLengthLabel"><span class="dim-text">原长 45 cm</span></div>
+                    <div class="dim-line dim-w" id="totalWidthLabel"><span class="dim-text">原宽 35 cm</span></div>
+
+                    <!-- 第二步：严格对齐内部的计算标注线 -->
+                    <div class="dim-inner-l" id="innerLengthLabel">
+                        <span class="dim-inner-text">新长: 45 - 5 - 5 = 35 cm</span>
+                    </div>
+                    <div class="dim-inner-w" id="innerWidthLabel">
+                        <span class="dim-inner-text">新宽: 35 - 5 - 5 = 25 cm</span>
+                    </div>
+                </div>
+
+                <!-- 举一反三面板 -->
+                <div class="practice-panel" id="practicePanel">
+                    <div class="practice-title">🎓 举一反三 (实战演练)</div>
+                    <div class="practice-q">
+                        一块长方形铁皮，长 <strong>50 cm</strong>，宽 <strong>40 cm</strong>。像刚才那样，从四个角各剪掉一个边长为 <strong>8 cm</strong> 的正方形，然后焊成一个无盖的铁盒。<br><br>
+                        请问：这个铁盒的容积是多少立方厘米？
+                    </div>
+                    <button class="btn-toggle-ans" onclick="toggleAnswer()">👁️ 查看解析与答案</button>
+                    <div class="answer-box" id="answerBox">
+                        1. <strong>找新长：</strong> 50 - 8 × 2 = 34 (cm) <br>
+                        2. <strong>找新宽：</strong> 40 - 8 × 2 = 24 (cm) <br>
+                        3. <strong>找高：</strong> 也就是剪去正方形的边长 8 (cm) <br>
+                        4. <strong>算容积：</strong> 34 × 24 × 8 = 6528 (cm³) <br>
+                        <strong>答：</strong> 这个铁盒的容积是 6528 立方厘米。
+                    </div>
+                </div>
+            </div>
+
+            <!-- 文字解题区 -->
+            <div class="text-area" id="textArea">
+                <div class="step-title" id="stepTitle">步骤 1：观察原纸板</div>
+                <div class="step-desc" id="stepDesc">
+                    题目给了一张长方形纸板。<br>
+                    长：<strong>45 cm</strong><br>
+                    宽：<strong>35 cm</strong><br>
+                    准备在四个角剪去正方形。
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部控制按钮 -->
+        <div class="controls">
+            <button class="btn-prev" id="btnPrev" onclick="prevStep()" disabled>⬅️ 上一步</button>
+            <button class="btn-next" id="btnNext" onclick="nextStep()">下一步：剪去四角 ➡️</button>
+        </div>
+    </div>
+
+    <script>
+        const stepsData = [
+            {
+                title: "步骤 1：观察原图",
+                desc: "这是一张长方形纸板。<br><br>长：<strong>45 cm</strong><br>宽：<strong>35 cm</strong><br><br>想象一下，我们要怎么处理它？",
+                btnText: "下一步：剪去四角 ➡️",
+                action: () => {
+                    document.getElementById('scene').className = 'scene view-2d';
+                    
+                    // 显示原尺寸标注
+                    document.getElementById('totalLengthLabel').style.opacity = '1';
+                    document.getElementById('totalWidthLabel').style.opacity = '1';
+                    
+                    // 隐藏第二步的内嵌标注和高度箭头
+                    document.getElementById('innerLengthLabel').style.opacity = '0';
+                    document.getElementById('innerWidthLabel').style.opacity = '0';
+                    document.getElementById('cutHeightLabel').style.opacity = '0';
+                    
+                    // 隐藏第三步的贴边标签
+                    document.getElementById('lbl-base-l').style.opacity = '0';
+                    document.getElementById('lbl-base-w').style.opacity = '0';
+                    document.getElementById('lbl-flap-h').style.opacity = '0';
+                    
+                    document.getElementById('scene').style.display = 'block';
+                    document.getElementById('practicePanel').classList.remove('active');
+                    document.getElementById('textArea').style.display = 'flex';
+                }
+            },
+            {
+                title: "步骤 2：剪去四角",
+                desc: "在纸板的四个角，各剪去一个边长为 <strong>5 cm</strong> 的正方形。<br><br>思考易错点：<br>纸板的<span class='highlight'>长被减去了几个 5 cm？宽呢？</span>",
+                btnText: "下一步：折叠成盒 ➡️",
+                action: () => {
+                    document.getElementById('scene').className = 'scene view-2d cut-out';
+                    
+                    // 隐藏第一步的原尺寸标注
+                    document.getElementById('totalLengthLabel').style.opacity = '0';
+                    document.getElementById('totalWidthLabel').style.opacity = '0';
+                    
+                    // 显示严丝合缝对齐内部的第二步专属动态计算线
+                    document.getElementById('innerLengthLabel').style.opacity = '1';
+                    document.getElementById('innerWidthLabel').style.opacity = '1';
+                    document.getElementById('cutHeightLabel').style.opacity = '1';
+                    
+                    // 隐藏第三步的贴边标签
+                    document.getElementById('lbl-base-l').style.opacity = '0';
+                    document.getElementById('lbl-base-w').style.opacity = '0';
+                    document.getElementById('lbl-flap-h').style.opacity = '0';
+                    
+                    document.getElementById('scene').style.display = 'block';
+                    document.getElementById('practicePanel').classList.remove('active');
+                    document.getElementById('textArea').style.display = 'flex';
+                }
+            },
+            {
+                title: "步骤 3：动态折叠",
+                desc: "把四个边折起来，变成无盖的长方体！<br><br>底面（深蓝色区域）留空，仔细观察贴边数据：<br>底面长 = 45 - 5 - 5 = <span class='highlight'>35 cm</span><br>底面宽 = 35 - 5 - 5 = <span class='highlight'>25 cm</span><br><br><strong>盒子的高：</strong>正是剪去的小正方形的边长 <span class='highlight'>5 cm</span>！",
+                btnText: "下一步：计算容积 ➡️",
+                action: () => {
+                    document.getElementById('scene').className = 'scene view-3d cut-out folded';
+                    
+                    // 隐藏所有 2D 尺寸线
+                    document.getElementById('totalLengthLabel').style.opacity = '0';
+                    document.getElementById('totalWidthLabel').style.opacity = '0';
+                    document.getElementById('innerLengthLabel').style.opacity = '0';
+                    document.getElementById('innerWidthLabel').style.opacity = '0';
+                    document.getElementById('cutHeightLabel').style.opacity = '0';
+
+                    // 开启 3D 专属“极简边缘贴靠”标签，保持视觉中央干净
+                    let lblL = document.getElementById('lbl-base-l');
+                    lblL.innerHTML = '长 35 cm';
+                    lblL.style.opacity = '1';
+                    
+                    let lblW = document.getElementById('lbl-base-w');
+                    lblW.innerHTML = '宽 25 cm';
+                    lblW.style.opacity = '1';
+
+                    let lblH = document.getElementById('lbl-flap-h');
+                    lblH.innerHTML = '高 5 cm';
+                    lblH.style.opacity = '1';
+
+                    document.getElementById('scene').style.display = 'block';
+                    document.getElementById('practicePanel').classList.remove('active');
+                    document.getElementById('textArea').style.display = 'flex';
+                }
+            },
+            {
+                title: "步骤 4：计算容积",
+                desc: "容积公式：<strong>V = 长 × 宽 × 高</strong><br><br>代入数据：<br>V = 35 × 25 × 5<br>&nbsp;&nbsp;&nbsp;= 875 × 5<br>&nbsp;&nbsp;&nbsp;= <span class='highlight'>4375 (cm³)</span><br><br><strong>答：这个盒子的容积是 4375 cm³。</strong>",
+                btnText: "下一步：举一反三 ➡️",
+                action: () => {
+                    document.getElementById('scene').className = 'scene view-3d cut-out folded';
+                    
+                    // 保持第三步标签状态
+                    document.getElementById('lbl-base-l').style.opacity = '1';
+                    document.getElementById('lbl-base-w').style.opacity = '1';
+                    document.getElementById('lbl-flap-h').style.opacity = '1';
+
+                    document.getElementById('scene').style.display = 'block';
+                    document.getElementById('practicePanel').classList.remove('active');
+                    document.getElementById('textArea').style.display = 'flex';
+                }
+            },
+            {
+                title: "终极挑战",
+                desc: "你已经掌握了核心秘密：“<strong>求新长和新宽时，必须减去2个正方形的边长，高就是正方形的边长。</strong>”<br><br>现在，请看左侧屏幕，尝试解决一道新题目吧！",
+                btnText: "已完成，复习一遍",
+                action: () => {
+                    // 隐藏3D演示，显示练习题
+                    document.getElementById('scene').style.display = 'none';
+                    document.getElementById('practicePanel').classList.add('active');
+                    document.getElementById('answerBox').style.display = 'none';
+                }
+            }
+        ];
+
+        let currentStep = 0;
+
+        function updateUI() {
+            document.getElementById('stepTitle').innerHTML = stepsData[currentStep].title;
+            document.getElementById('stepDesc').innerHTML = stepsData[currentStep].desc;
+            
+            const btnPrev = document.getElementById('btnPrev');
+            const btnNext = document.getElementById('btnNext');
+            
+            btnPrev.disabled = currentStep === 0;
+            btnNext.innerHTML = stepsData[currentStep].btnText;
+
+            stepsData[currentStep].action();
+        }
+
+        function nextStep() {
+            if (currentStep < stepsData.length - 1) {
+                currentStep++;
+                updateUI();
+            } else {
+                currentStep = 0;
+                updateUI();
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateUI();
+            }
+        }
+
+        function toggleAnswer() {
+            const box = document.getElementById('answerBox');
+            if(box.style.display === 'none' || box.style.display === '') {
+                box.style.display = 'block';
+            } else {
+                box.style.display = 'none';
+            }
+        }
+
+        window.onload = () => {
+            updateUI();
+        };
+    </script>
+</body>
+</html>
