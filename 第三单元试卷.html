@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>五年级数学下册 - 3D可视化教学平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        #canvas-container { width: 100%; height: 100vh; background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%); }
+        .glass-panel { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px); }
+        .btn-active { background-color: #3b82f6; color: white; border-color: #2563eb; }
+        .control-btn { pointer-events: auto; transition: all 0.2s; }
+        .control-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        
+        #info-content b {
+            color: #e11d48; 
+            background-color: #ffe4e6; 
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Courier New', monospace; 
+            font-size: 1.1em; 
+            display: inline-block;
+            margin: 2px 1px;
+            box-shadow: 0 1px 2px rgba(225, 29, 72, 0.15); 
+            letter-spacing: 0.5px;
+        }
+        /* 增加提示高亮动画 */
+        .teacher-hint {
+            color: #d97706;
+            font-weight: bold;
+            animation: pulse-hint 2s infinite;
+        }
+        @keyframes pulse-hint {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="flex">
+
+    <!-- 左侧导航栏 -->
+    <div class="w-80 h-screen glass-panel shadow-2xl z-10 flex flex-col p-6 absolute left-0 top-0 border-r border-white">
+        <div class="mb-8 text-center">
+            <h1 class="text-2xl font-bold text-blue-800">3D 数学教具</h1>
+            <p class="text-sm text-gray-500 mt-2">人教版五年级下册 第三单元错题</p>
+        </div>
+
+        <div class="flex-1 flex flex-col gap-4 overflow-y-auto pr-2" style="scrollbar-width: thin;">
+            <button onclick="loadScene('splice')" id="btn-scene-splice" class="scene-btn px-4 py-3 bg-white border-2 border-blue-200 rounded-xl text-left font-bold text-gray-700 hover:bg-blue-50">
+                1. 长方体拼切 (填空第9题)
+                <p class="text-xs font-normal text-gray-500 mt-1">演示不同拼法对表面积的影响</p>
+            </button>
+            <button onclick="loadScene('paint')" id="btn-scene-paint" class="scene-btn px-4 py-3 bg-white border-2 border-blue-200 rounded-xl text-left font-bold text-gray-700 hover:bg-blue-50">
+                2. 涂色正方体 (填空第10题)
+                <p class="text-xs font-normal text-gray-500 mt-1">全息剥离：找准涂色面的空间位置</p>
+            </button>
+            <button onclick="loadScene('dig')" id="btn-scene-dig" class="scene-btn px-4 py-3 bg-white border-2 border-blue-200 rounded-xl text-left font-bold text-gray-700 hover:bg-blue-50">
+                3. 挖角平移魔法 (选择第3题)
+                <p class="text-xs font-normal text-gray-500 mt-1">打破直觉：证明挖去顶点表面积不变</p>
+            </button>
+            <button onclick="loadScene('sleeve')" id="btn-scene-sleeve" class="scene-btn px-4 py-3 bg-white border-2 border-orange-300 rounded-xl text-left font-bold text-gray-700 hover:bg-orange-50 relative overflow-hidden">
+                <span class="absolute top-0 right-0 bg-orange-500 text-white text-[10px] px-2 py-1 rounded-bl-lg">重点难点</span>
+                4. 图书封套问题 (大题第4)
+                <p class="text-xs font-normal text-gray-500 mt-1">合并厚度，寻找缺失的“书脊”面</p>
+            </button>
+            <button onclick="loadScene('foldbox')" id="btn-scene-foldbox" class="scene-btn px-4 py-3 bg-white border-2 border-purple-300 rounded-xl text-left font-bold text-gray-700 hover:bg-purple-50">
+                5. 铁皮折盒问题 (大题第5)
+                <p class="text-xs font-normal text-gray-500 mt-1">锚点映射：2D切边如何变成3D的高</p>
+            </button>
+            <button onclick="loadScene('net')" id="btn-scene-net" class="scene-btn px-4 py-3 bg-white border-2 border-emerald-300 rounded-xl text-left font-bold text-gray-700 hover:bg-emerald-50">
+                6. 无盖长方体展开图 (选择5)
+                <p class="text-xs font-normal text-gray-500 mt-1">4种不同思维求表面积算理解析</p>
+            </button>
+        </div>
+
+        <div class="mt-auto pt-4 border-t border-gray-200 text-xs text-gray-400 text-center">
+            <p>💡 提示：实物与3D结合讲解效果更佳</p>
+        </div>
+    </div>
+
+    <!-- 3D 渲染区域 -->
+    <div id="canvas-container" class="flex-1 w-full relative">
+        <div id="dynamic-controls" class="absolute bottom-8 left-80 right-0 flex justify-center gap-4 z-10 pointer-events-none"></div>
+        
+        <div id="info-box" class="absolute top-8 right-8 glass-panel p-4 rounded-xl shadow-lg border border-white max-w-sm hidden transition-opacity duration-300">
+            <h3 id="info-title" class="font-bold text-lg text-blue-800 mb-1"></h3>
+            <p id="info-content" class="text-sm text-gray-700 leading-relaxed"></p>
+        </div>
+    </div>
+
+    <script>
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(15, 12, 18);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+        
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(10, 20, 10);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 2048; 
+        dirLight.shadow.mapSize.height = 2048;
+        scene.add(dirLight);
+
+        const gridHelper = new THREE.GridHelper(30, 30, 0x888888, 0xcccccc);
+        gridHelper.position.y = -3;
+        scene.add(gridHelper);
+
+        let activeObjects = [];
+        let animations = []; 
+        let currentSceneId = '';
+
+        function clearScene() {
+            activeObjects.forEach(obj => {
+                scene.remove(obj);
+                if(obj.geometry) obj.geometry.dispose();
+                if(obj.material) {
+                    if(Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
+                    else obj.material.dispose();
+                }
+            });
+            activeObjects = [];
+            animations = [];
+            document.getElementById('dynamic-controls').innerHTML = '';
+            document.getElementById('info-box').classList.add('hidden');
+            
+            document.querySelectorAll('.scene-btn').forEach(btn => {
+                btn.classList.remove('btn-active');
+            });
+        }
+
+        function showInfo(title, content) {
+            const box = document.getElementById('info-box');
+            document.getElementById('info-title').innerText = title;
+            document.getElementById('info-content').innerHTML = content;
+            box.classList.remove('hidden');
+        }
+
+        function createBoxWithEdges(w, h, d, color, x, y, z) {
+            const geometry = new THREE.BoxGeometry(w, h, d);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: color, 
+                transparent: true,
+                opacity: 1,
+                polygonOffset: true,
+                polygonOffsetFactor: 1, 
+                polygonOffsetUnits: 1
+            });
+            const cube = new THREE.Mesh(geometry, material);
+            cube.position.set(x, y, z);
+            cube.castShadow = true;
+            cube.receiveShadow = true;
+
+            const edges = new THREE.EdgesGeometry(geometry);
+            const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 2 }));
+            cube.add(line);
+            
+            scene.add(cube);
+            activeObjects.push(cube);
+            return cube;
+        }
+
+        function makeTextSprite(message, color="#1e40af") {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            const fontSize = 40; 
+            context.font = "bold " + fontSize + "px 'Microsoft YaHei', sans-serif";
+            const textWidth = context.measureText(message).width;
+            canvas.width = textWidth + 40; 
+            canvas.height = fontSize * 1.5; 
+            
+            context.lineJoin = "round";
+            context.lineWidth = 4; 
+            context.strokeStyle = "rgba(255, 255, 255, 0.9)"; 
+            context.strokeText(message, 20, fontSize * 1.05);
+            
+            context.fillStyle = color;
+            context.fillText(message, 20, fontSize * 1.05);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            const spriteMaterial = new THREE.SpriteMaterial({ map: texture, depthTest: false });
+            const sprite = new THREE.Sprite(spriteMaterial);
+            sprite.scale.set(canvas.width * 0.04, canvas.height * 0.04, 1);
+            return sprite;
+        }
+
+        // ==========================================
+        // 场景 1: 长方体拼切 (藏面理论)
+        // ==========================================
+        function initSceneSplice() {
+            clearScene();
+            currentSceneId = 'splice';
+            document.getElementById('btn-scene-splice').classList.add('btn-active');
+            camera.position.set(15, 10, 15);
+
+            const box1 = createBoxWithEdges(5, 2, 3, 0xffa500, -3, 0, 0); 
+            const box2 = createBoxWithEdges(5, 2, 3, 0x4169e1, 3, 0, 0);  
+
+            animations.push({ obj: box1, target: new THREE.Vector3(-3, 0, 0) });
+            animations.push({ obj: box2, target: new THREE.Vector3(3, 0, 0) });
+
+            const controlsHtml = `
+                <button onclick="animSplice('reset')" class="control-btn px-6 py-2 bg-gray-500 text-white rounded-full font-bold shadow-lg">1. 分开 (初始)</button>
+                <button onclick="animSplice('small')" class="control-btn px-6 py-2 bg-green-500 text-white rounded-full font-bold shadow-lg">2. 藏小面 (左右拼)</button>
+                <button onclick="animSplice('mid')" class="control-btn px-6 py-2 bg-yellow-500 text-white rounded-full font-bold shadow-lg">3. 藏中面 (前后拼)</button>
+                <button onclick="animSplice('large')" class="control-btn px-6 py-2 bg-red-500 text-white rounded-full font-bold shadow-lg animate-pulse">4. 藏大面 (上下拼)</button>
+            `;
+            document.getElementById('dynamic-controls').innerHTML = controlsHtml;
+
+            showInfo("拼切长方体", "体积相加不变。但拼接时会有两个面“藏”起来。<br><span class='teacher-hint'>互动：哪种拼法藏起来的面最大？</span><br><b>结论：</b>把最大的面藏起来（上下叠放），表面积减少得最多，剩下的表面积最小！");
+            
+            window.animSplice = function(type) {
+                if(type === 'reset') {
+                    animations[0].target.set(-4, 0, 0);
+                    animations[1].target.set(4, 0, 0);
+                } else if(type === 'small') {
+                    animations[0].target.set(-2.5, 0, 0);
+                    animations[1].target.set(2.5, 0, 0);
+                } else if(type === 'mid') {
+                    animations[0].target.set(0, 0, -1.5);
+                    animations[1].target.set(0, 0, 1.5);
+                } else if(type === 'large') {
+                    animations[0].target.set(0, 1, 0);
+                    animations[1].target.set(0, -1, 0);
+                }
+            }
+            window.animSplice('reset');
+        }
+
+        // ==========================================
+        // 场景 2: 涂色正方体 (全息剥离优化)
+        // ==========================================
+        let cubesGrid = [];
+        function initScenePaint() {
+            clearScene();
+            currentSceneId = 'paint';
+            document.getElementById('btn-scene-paint').classList.add('btn-active');
+            camera.position.set(8, 8, 12);
+            cubesGrid = [];
+
+            const offset = 1.05; 
+            for(let x = -1; x <= 1; x++) {
+                for(let y = -1; y <= 1; y++) {
+                    for(let z = -1; z <= 1; z++) {
+                        const cube = createBoxWithEdges(1, 1, 1, 0xeeeeee, x*offset, y*offset, z*offset);
+                        cube.userData = { 
+                            x: x, y: y, z: z,
+                            paintCount: Math.abs(x) + Math.abs(y) + Math.abs(z) 
+                        };
+                        cubesGrid.push(cube);
+                    }
+                }
+            }
+
+            const controlsHtml = `
+                <button onclick="animPaint(3)" class="control-btn px-6 py-2 bg-red-500 text-white rounded-full font-bold shadow-lg">三面涂色 (顶点)</button>
+                <button onclick="animPaint(2)" class="control-btn px-6 py-2 bg-green-500 text-white rounded-full font-bold shadow-lg">两面涂色 (棱上)</button>
+                <button onclick="animPaint(1)" class="control-btn px-6 py-2 bg-blue-500 text-white rounded-full font-bold shadow-lg">一面涂色 (面心)</button>
+                <button onclick="animPaint(-1)" class="control-btn px-6 py-2 bg-gray-600 text-white rounded-full font-bold shadow-lg">完整魔方</button>
+            `;
+            document.getElementById('dynamic-controls').innerHTML = controlsHtml;
+
+            showInfo("涂色正方体找规律", "将魔方空间剥离：<br><b>三面涂色：</b>都被固定在 <b>8</b> 个顶点处。<br><b>两面涂色：</b>分布在 <b>12</b> 条棱的中间。<br><b>一面涂色：</b>镶嵌在 <b>6</b> 个面的正中心。");
+
+            window.animPaint = function(targetCount) {
+                cubesGrid.forEach(cube => {
+                    const mat = cube.material;
+                    // 优化：处理边缘线条的可见性
+                    const edges = cube.children[0]; 
+
+                    if(targetCount === -1) {
+                        mat.color.setHex(0xffdd55); 
+                        mat.opacity = 1;
+                        mat.transparent = false;
+                        mat.depthWrite = true;
+                        edges.visible = true;
+                    } else {
+                        if(cube.userData.paintCount === targetCount) {
+                            mat.opacity = 1;
+                            mat.transparent = false;
+                            mat.depthWrite = true;
+                            edges.visible = true;
+                            if(targetCount === 3) mat.color.setHex(0xff3333);
+                            if(targetCount === 2) mat.color.setHex(0x33ff33);
+                            if(targetCount === 1) mat.color.setHex(0x3366ff);
+                        } else {
+                            // 极低透明度，关闭深度写入，实现全息悬浮效果
+                            mat.color.setHex(0xaaaaaa);
+                            mat.opacity = 0.02; 
+                            mat.transparent = true;
+                            mat.depthWrite = false;
+                            edges.visible = false; // 隐藏干扰方块的黑边
+                        }
+                    }
+                });
+            }
+            window.animPaint(-1);
+        }
+
+        // ==========================================
+        // 场景 3: 挖角平移魔法 (认知冲突优化)
+        // ==========================================
+        function initSceneDig() {
+            clearScene();
+            currentSceneId = 'dig';
+            document.getElementById('btn-scene-dig').classList.add('btn-active');
+            camera.position.set(6, 6, 8);
+            controls.target.set(1.5, 1.5, 1.5); 
+
+            // 生成除了右上角以外的本体
+            for(let x = 0; x < 3; x++) {
+                for(let y = 0; y < 3; y++) {
+                    for(let z = 0; z < 3; z++) {
+                        if(x === 2 && y === 2 && z === 2) continue;
+                        createBoxWithEdges(1, 1, 1, 0x87CEEB, x + 0.5, y + 0.5, z + 0.5);
+                    }
+                }
+            }
+
+            // 要挖去的小方块 (用于展示初始状态)
+            const cornerCube = createBoxWithEdges(1, 1, 1, 0xffa500, 2.5, 2.5, 2.5);
+
+            // 坑位里的三个彩色补偿面
+            const planeGeo = new THREE.PlaneGeometry(1, 1);
+            const planeBottom = new THREE.Mesh(planeGeo, new THREE.MeshPhongMaterial({color: 0xff3333, side: THREE.DoubleSide}));
+            planeBottom.rotation.x = -Math.PI / 2;
+            planeBottom.position.set(2.5, 2.01, 2.5); 
+            scene.add(planeBottom);
+            activeObjects.push(planeBottom);
+
+            const planeLeft = new THREE.Mesh(planeGeo, new THREE.MeshPhongMaterial({color: 0x33ff33, side: THREE.DoubleSide}));
+            planeLeft.rotation.y = Math.PI / 2;
+            planeLeft.position.set(2.01, 2.5, 2.5);
+            scene.add(planeLeft);
+            activeObjects.push(planeLeft);
+
+            const planeBack = new THREE.Mesh(planeGeo, new THREE.MeshPhongMaterial({color: 0x3333ff, side: THREE.DoubleSide}));
+            planeBack.position.set(2.5, 2.5, 2.01);
+            scene.add(planeBack);
+            activeObjects.push(planeBack);
+
+            animations.push({ obj: planeBottom, target: new THREE.Vector3(2.5, 2.01, 2.5), origin: new THREE.Vector3(2.5, 2.01, 2.5), pushed: new THREE.Vector3(2.5, 3.01, 2.5) });
+            animations.push({ obj: planeLeft, target: new THREE.Vector3(2.01, 2.5, 2.5), origin: new THREE.Vector3(2.01, 2.5, 2.5), pushed: new THREE.Vector3(3.01, 2.5, 2.5) });
+            animations.push({ obj: planeBack, target: new THREE.Vector3(2.5, 2.5, 2.01), origin: new THREE.Vector3(2.5, 2.5, 2.01), pushed: new THREE.Vector3(2.5, 2.5, 3.01) });
+
+            const controlsHtml = `
+                <button onclick="animDig('reset')" class="control-btn px-5 py-2 bg-gray-500 text-white rounded-full font-bold shadow-lg">1. 完整长方体</button>
+                <button onclick="animDig('dig')" class="control-btn px-5 py-2 bg-yellow-600 text-white rounded-full font-bold shadow-lg">2. 挖去一角</button>
+                <button onclick="animDig('magic')" class="control-btn px-5 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-full font-bold shadow-lg shadow-purple-500/50 animate-bounce">3. ✨ 施展平移魔法</button>
+            `;
+            document.getElementById('dynamic-controls').innerHTML = controlsHtml;
+
+            window.animDig = function(state) {
+                if(state === 'reset') {
+                    showInfo("顶点挖角问题", "这是一个完整的长方体。<br><span class='teacher-hint'>互动：如果我们在顶点处挖掉一个小方块，它的表面积会变小吗？</span>");
+                    cornerCube.visible = true;
+                    planeBottom.visible = false;
+                    planeLeft.visible = false;
+                    planeBack.visible = false;
+                    animations.forEach(anim => anim.target.copy(anim.origin));
+                } else if(state === 'dig') {
+                    showInfo("顶点挖角问题", "顶点处被挖去了一个小块，体积必然变小了。<br>但是，表面积呢？观察凹进去坑里的那三个面。");
+                    cornerCube.visible = false;
+                    planeBottom.visible = true;
+                    planeLeft.visible = true;
+                    planeBack.visible = true;
+                    animations.forEach(anim => anim.target.copy(anim.origin));
+                } else if(state === 'magic') {
+                    showInfo("顶点挖角问题", "点击“平移魔法”后，坑里面的三个面被推出来了，刚好能补齐外面缺失的三个面。<br><b>结论：表面积完全不变！</b>");
+                    cornerCube.visible = false;
+                    planeBottom.visible = true;
+                    planeLeft.visible = true;
+                    planeBack.visible = true;
+                    animations.forEach(anim => anim.target.copy(anim.pushed));
+                }
+            }
+            window.animDig('reset');
+        }
+
+        // ==========================================
+        // 场景 4: 图书封套问题
+        // ==========================================
+        function initSceneBookSleeve() {
+            clearScene();
+            currentSceneId = 'sleeve';
+            document.getElementById('btn-scene-sleeve').classList.add('btn-active');
+            camera.position.set(0, 25, 35);
+            controls.target.set(0, 0, 0);
+
+            const bookGeo = new THREE.BoxGeometry(26, 0.5, 18);
+            const bookMat1 = new THREE.MeshPhongMaterial({ color: 0x4285F4 }); 
+            const bookMat2 = new THREE.MeshPhongMaterial({ color: 0x34A853 }); 
+            
+            const book1 = new THREE.Mesh(bookGeo, bookMat1);
+            const book2 = new THREE.Mesh(bookGeo, bookMat2);
+            
+            book1.position.set(0, -3, 0);
+            book2.position.set(0, 3, 0);
+            scene.add(book1); scene.add(book2);
+            activeObjects.push(book1, book2);
+
+            const labelL = makeTextSprite("长 26 cm");
+            labelL.position.set(0, 1.5, 9.5); 
+            scene.add(labelL); activeObjects.push(labelL);
+
+            const labelW = makeTextSprite("宽 18 cm");
+            labelW.position.set(14.5, 1.5, 0); 
+            scene.add(labelW); activeObjects.push(labelW);
+
+            const labelH1 = makeTextSprite("厚 0.5 cm");
+            book1.add(labelH1); labelH1.position.set(-15.5, 0, 0);
+
+            const labelH2 = makeTextSprite("厚 0.5 cm");
+            book2.add(labelH2); labelH2.position.set(-15.5, 0, 0);
+
+            const labelHTotal = makeTextSprite("合体总厚度 1 cm", "#b91c1c"); 
+            labelHTotal.position.set(-16, 0, 0);
+            scene.add(labelHTotal); activeObjects.push(labelHTotal);
+            labelHTotal.material.opacity = 0; 
+
+            const sleeveGroup = new THREE.Group();
+            scene.add(sleeveGroup); activeObjects.push(sleeveGroup);
+            
+            const cardMat = new THREE.MeshPhongMaterial({ color: 0xDEB887 }); 
+            const edgeMat = new THREE.LineBasicMaterial({ color: 0x8B4513, linewidth: 2 });
+            
+            function createCardboard(w, h, d, x, y, z) {
+                const geo = new THREE.BoxGeometry(w, h, d);
+                const mesh = new THREE.Mesh(geo, cardMat);
+                mesh.position.set(x, y, z);
+                mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), edgeMat));
+                sleeveGroup.add(mesh);
+            }
+
+            createCardboard(26.4, 0.2, 18.4, 0, 0.6, 0);   
+            createCardboard(26.4, 0.2, 18.4, 0, -0.6, 0);   
+            createCardboard(26.4, 1.4, 0.2, 0, 0, 9.1);     
+            createCardboard(0.2, 1.4, 18.4, -13.1, 0, 0);   
+            createCardboard(0.2, 1.4, 18.4, 13.1, 0, 0);    
+            sleeveGroup.position.set(0, 0, 35); 
+
+            const pSpine = new THREE.Mesh(new THREE.PlaneGeometry(26, 1.0), new THREE.MeshPhongMaterial({ color: 0xff0000, transparent: true, opacity: 0, side: THREE.DoubleSide }));
+            pSpine.position.set(0, 0, -9.02); 
+            scene.add(pSpine); activeObjects.push(pSpine);
+
+            animations.push({ obj: book1, target: new THREE.Vector3(0, -3, 0) });
+            animations.push({ obj: book2, target: new THREE.Vector3(0, 3, 0) });
+            animations.push({ obj: sleeveGroup, target: new THREE.Vector3(0, 0, 35) });
+
+            const controlsHtml = `
+                <button onclick="animSleeve('separate')" class="control-btn px-5 py-2 bg-gray-500 text-white rounded-full font-bold shadow-lg">1. 翻阅</button>
+                <button onclick="animSleeve('stack')" class="control-btn px-5 py-2 bg-blue-500 text-white rounded-full font-bold shadow-lg">2. 叠放合体</button>
+                <button onclick="animSleeve('wrap')" class="control-btn px-5 py-2 bg-yellow-600 text-white rounded-full font-bold shadow-lg shadow-yellow-500/50">3. 推入封套</button>
+                <button onclick="animSleeve('spine')" class="control-btn px-5 py-2 bg-red-500 text-white rounded-full font-bold shadow-lg animate-bounce">4. 寻找缺失的书脊</button>
+            `;
+            document.getElementById('dynamic-controls').innerHTML = controlsHtml;
+            showInfo("图书封套打包", "<b>第一步：</b>观察长宽数据。两本书叠放合体后，总厚度变为 <b>1</b>。<br><b>第二步：</b>将书籍推入物理封套。<br><b>第三步：</b>书脊处不封口，算表面积时一定要减掉这个洞！");
+
+            window.animSleeve = function(action) {
+                if (action === 'separate') {
+                    animations[0].target.set(0, -3, 0);
+                    animations[1].target.set(0, 3, 0);
+                    animations[2].target.set(0, 0, 35); 
+                    labelH1.material.opacity = 1; labelH2.material.opacity = 1;
+                    labelHTotal.material.opacity = 0; pSpine.material.opacity = 0;
+                } else if (action === 'stack') {
+                    animations[0].target.set(0, -0.25, 0); animations[1].target.set(0, 0.25, 0);
+                    animations[2].target.set(0, 0, 35); 
+                    labelH1.material.opacity = 0; labelH2.material.opacity = 0;
+                    labelHTotal.material.opacity = 1; pSpine.material.opacity = 0;
+                } else if (action === 'wrap') {
+                    animations[0].target.set(0, -0.25, 0); animations[1].target.set(0, 0.25, 0);
+                    animations[2].target.set(0, 0, 0); 
+                    labelHTotal.material.opacity = 1; pSpine.material.opacity = 0;
+                } else if (action === 'spine') {
+                    const duration = 1200; 
+                    const startPos = camera.position.clone();
+                    const endPos = new THREE.Vector3(0, 10, -35); 
+                    let startTime = null;
+                    function rotateCamera(time) {
+                        if (!startTime) startTime = time;
+                        const progress = Math.min((time - startTime) / duration, 1);
+                        const ease = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress;
+                        camera.position.lerpVectors(startPos, endPos, ease);
+                        camera.lookAt(0,0,0);
+                        if (progress < 1) requestAnimationFrame(rotateCamera);
+                        else {
+                            controls.target.set(0,0,0); controls.update(); 
+                            let count = 0;
+                            const flash = setInterval(() => {
+                                pSpine.material.opacity = pSpine.material.opacity === 0 ? 0.7 : 0;
+                                count++;
+                                if(count > 7) { clearInterval(flash); pSpine.material.opacity = 0.5; }
+                            }, 300);
+                        }
+                    }
+                    requestAnimationFrame(rotateCamera);
+                }
+            }
+        }
+
+        // ==========================================
+        // 场景 5: 铁皮折盒问题 (2D-3D映射优化)
+        // ==========================================
+        function initSceneFoldBox() {
+            clearScene();
+            currentSceneId = 'foldbox';
+            document.getElementById('btn-scene-foldbox').classList.add('btn-active');
+            camera.position.set(0, 30, 40);
+            controls.target.set(0, 0, 0);
+
+            const sheetMat = new THREE.MeshPhongMaterial({ color: 0x9ca3af, side: THREE.DoubleSide }); 
+            const cornerMat = new THREE.MeshPhongMaterial({ color: 0xef4444, side: THREE.DoubleSide }); 
+            const waterMat = new THREE.MeshPhongMaterial({ color: 0x3b82f6, transparent: true, opacity: 0.7 }); 
+
+            const boxGroup = new THREE.Group();
+            scene.add(boxGroup); activeObjects.push(boxGroup);
+
+            const base = new THREE.Mesh(new THREE.PlaneGeometry(20, 15), sheetMat);
+            base.rotation.x = -Math.PI / 2;
+            boxGroup.add(base);
+
+            function createFlap(w, h, hingeX, hingeZ, flapX, flapZ) {
+                const hinge = new THREE.Group();
+                hinge.position.set(hingeX, 0, hingeZ);
+                const flap = new THREE.Mesh(new THREE.PlaneGeometry(w, h), sheetMat);
+                flap.rotation.x = -Math.PI / 2;
+                flap.position.set(flapX, 0, flapZ);
+                hinge.add(flap);
+                boxGroup.add(hinge);
+                return { hinge, flap };
+            }
+
+            const { hinge: hingeLeft, flap: flapLeft } = createFlap(5, 15, -10, 0, -2.5, 0);
+            const { hinge: hingeRight } = createFlap(5, 15, 10, 0, 2.5, 0);
+            const { hinge: hingeTop } = createFlap(20, 5, 0, -7.5, 0, -2.5);
+            const { hinge: hingeBottom } = createFlap(20, 5, 0, 7.5, 0, 2.5);
+
+            // 映射优化：为左侧翼添加“高=5”的文字精灵标签
+            const heightLabel = makeTextSprite("切掉的 5cm 变成了高！", "#dc2626");
+            heightLabel.position.set(-1.5, 0.2, 0); 
+            heightLabel.visible = false; // 初始隐藏
+            flapLeft.add(heightLabel);
+
+            const corners = [];
+            const posCorners = [ [-12.5, -10], [12.5, -10], [-12.5, 10], [12.5, 10] ];
+            posCorners.forEach(pos => {
+                const corner = new THREE.Mesh(new THREE.PlaneGeometry(5, 5), cornerMat);
+                corner.rotation.x = -Math.PI / 2;
+                corner.position.set(pos[0], 0, pos[1]);
+                boxGroup.add(corner);
+                corners.push(corner);
+                animations.push({ obj: corner, targetScale: new THREE.Vector3(1, 1, 1) });
+            });
+
+            const water = new THREE.Mesh(new THREE.BoxGeometry(19.8, 5, 14.8), waterMat);
+            water.position.set(0, 2.5, 0);
+            water.scale.set(1, 0.001, 1); 
+            boxGroup.add(water);
+            
+            animations.push({ obj: hingeLeft, targetRot: new THREE.Vector3(0, 0, 0) });
+            animations.push({ obj: hingeRight, targetRot: new THREE.Vector3(0, 0, 0) });
+            animations.push({ obj: hingeTop, targetRot: new THREE.Vector3(0, 0, 0) });
+            animations.push({ obj: hingeBottom, targetRot: new THREE.Vector3(0, 0, 0) });
+            animations.push({ obj: water, targetScale: new THREE.Vector3(1, 0.001, 1) });
+
+            const controlsHtml = `
+                <button onclick="animFold('flat')" class="control-btn px-4 py-2 bg-gray-500 text-white rounded-full font-bold shadow-lg">1. 平面铁皮</button>
+                <button onclick="animFold('cut')" class="control-btn px-4 py-2 bg-red-500 text-white rounded-full font-bold shadow-lg">2. 减去四角</button>
+                <button onclick="animFold('fold')" class="control-btn px-4 py-2 bg-purple-600 text-white rounded-full font-bold shadow-lg">3. 向上折叠</button>
+                <button onclick="animFold('fill')" class="control-btn px-4 py-2 bg-blue-500 text-white rounded-full font-bold shadow-lg animate-pulse">4. 注水求容积</button>
+            `;
+            document.getElementById('dynamic-controls').innerHTML = controlsHtml;
+
+            showInfo("铁皮折盒推演", "原长30，宽25。<br>切去四角后，新长：30-5×2 = <b>20</b>。<br>新宽：25-5×2 = <b>15</b>。<br><span class='teacher-hint'>重点观察：折起后，哪一段线段变成了高？</span><br>容积 = <b>20×15×5 = 1500</b> 立方厘米。");
+
+            window.animFold = function(state) {
+                if(state === 'flat') {
+                    heightLabel.visible = false;
+                    animations.forEach(anim => {
+                        if(anim.obj === hingeLeft || anim.obj === hingeRight || anim.obj === hingeTop || anim.obj === hingeBottom) anim.targetRot.set(0, 0, 0);
+                        if(corners.includes(anim.obj)) anim.targetScale.set(1, 1, 1);
+                        if(anim.obj === water) anim.targetScale.set(1, 0.001, 1);
+                    });
+                } else if(state === 'cut') {
+                    heightLabel.visible = true; // 切去后显示标签
+                    animations.forEach(anim => {
+                        if(anim.obj === hingeLeft || anim.obj === hingeRight || anim.obj === hingeTop || anim.obj === hingeBottom) anim.targetRot.set(0, 0, 0);
+                        if(corners.includes(anim.obj)) anim.targetScale.set(0.001, 0.001, 0.001);
+                        if(anim.obj === water) anim.targetScale.set(1, 0.001, 1);
+                    });
+                } else if(state === 'fold') {
+                    heightLabel.visible = true;
+                    animations.forEach(anim => {
+                        if(anim.obj === hingeLeft) anim.targetRot.set(0, 0, -Math.PI / 2);
+                        if(anim.obj === hingeRight) anim.targetRot.set(0, 0, Math.PI / 2);
+                        if(anim.obj === hingeTop) anim.targetRot.set(Math.PI / 2, 0, 0);
+                        if(anim.obj === hingeBottom) anim.targetRot.set(-Math.PI / 2, 0, 0);
+                        if(corners.includes(anim.obj)) anim.targetScale.set(0.001, 0.001, 0.001);
+                        if(anim.obj === water) anim.targetScale.set(1, 0.001, 1);
+                    });
+                } else if(state === 'fill') {
+                    heightLabel.visible = true;
+                    animations.forEach(anim => {
+                        if(anim.obj === hingeLeft) anim.targetRot.set(0, 0, -Math.PI / 2);
+                        if(anim.obj === hingeRight) anim.targetRot.set(0, 0, Math.PI / 2);
+                        if(anim.obj === hingeTop) anim.targetRot.set(Math.PI / 2, 0, 0);
+                        if(anim.obj === hingeBottom) anim.targetRot.set(-Math.PI / 2, 0, 0);
+                        if(anim.obj === water) anim.targetScale.set(1, 1, 1); 
+                    });
+                }
+            }
+        }
+
+        // ==========================================
+        // 场景 6: 无盖长方体展开图算理
+        // ==========================================
+        function initSceneNet() {
+            clearScene();
+            currentSceneId = 'net';
+            document.getElementById('btn-scene-net').classList.add('btn-active');
+            camera.position.set(0, 12, 12);
+            controls.target.set(0, 0, 0);
+
+            const netGroup = new THREE.Group();
+            scene.add(netGroup); activeObjects.push(netGroup);
+
+            let netTimeoutId = null;
+            const matBase = new THREE.MeshPhongMaterial({ color: 0x9ca3af });
+            const matFlapLR = new THREE.MeshPhongMaterial({ color: 0x9ca3af });
+            const matFlapTB = new THREE.MeshPhongMaterial({ color: 0x9ca3af });
+            const matCorner = new THREE.MeshPhongMaterial({ color: 0xf43f5e, transparent: true, opacity: 0 });
+            const matLid = new THREE.MeshPhongMaterial({ color: 0xf59e0b, transparent: true, opacity: 0 });
+            const matDashed = new THREE.LineDashedMaterial({ color: 0xf43f5e, dashSize: 0.2, gapSize: 0.1, linewidth: 2 });
+
+            function createPiece(w, d, mat, x, z) {
+                const geo = new THREE.BoxGeometry(w, 0.1, d);
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.position.set(x, 0, z);
+                mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 2 })));
+                return mesh;
+            }
+
+            const base = createPiece(4, 3, matBase, 0, 0); netGroup.add(base);
+            const hLeft = new THREE.Group(); hLeft.position.set(-2, 0, 0); netGroup.add(hLeft);
+            const fLeft = createPiece(1, 3, matFlapLR, -0.5, 0); hLeft.add(fLeft);
+            const hRight = new THREE.Group(); hRight.position.set(2, 0, 0); netGroup.add(hRight);
+            const fRight = createPiece(1, 3, matFlapLR, 0.5, 0); hRight.add(fRight);
+            const hTop = new THREE.Group(); hTop.position.set(0, 0, -1.5); netGroup.add(hTop);
+            const fTop = createPiece(4, 1, matFlapTB, 0, -0.5); hTop.add(fTop);
+            const hBottom = new THREE.Group(); hBottom.position.set(0, 0, 1.5); netGroup.add(hBottom);
+            const fBottom = createPiece(4, 1, matFlapTB, 0, 0.5); hBottom.add(fBottom);
+
+            const lblBaseL = makeTextSprite("长=4", "#1e40af"); lblBaseL.position.set(0, 0.3, 1.2); lblBaseL.scale.multiplyScalar(0.4); base.add(lblBaseL);
+            const lblBaseW = makeTextSprite("宽=3", "#1e40af"); lblBaseW.position.set(1.5, 0.3, 0); lblBaseW.scale.multiplyScalar(0.4); base.add(lblBaseW);
+
+            const corners = []; const cornersDashed = []; 
+            const cPos = [[-2.5, -2], [2.5, -2], [-2.5, 2], [2.5, 2]];
+            cPos.forEach(p => {
+                const c = createPiece(1, 1, matCorner, p[0], p[1]);
+                netGroup.add(c); corners.push(c);
+                animations.push({ obj: c, targetScale: new THREE.Vector3(0.001, 0.001, 0.001) }); 
+                const dashLine = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 0.1, 1)), matDashed);
+                dashLine.computeLineDistances(); dashLine.position.set(p[0], 0, p[1]); dashLine.visible = false; 
+                netGroup.add(dashLine); cornersDashed.push(dashLine);
+            });
+
+            const lid = createPiece(4, 3, matLid, 0, 1); netGroup.add(lid);
+            animations.push({ obj: lid, target: new THREE.Vector3(0, 5, 0) }); 
+
+            animations.push({ obj: hLeft, targetRot: new THREE.Vector3(0, 0, 0) });
+            animations.push({ obj: hRight, targetRot: new THREE.Vector3(0, 0, 0) });
+            animations.push({ obj: hTop, targetRot: new THREE.Vector3(0, 0, 0) });
+            animations.push({ obj: hBottom, targetRot: new THREE.Vector3(0, 0, 0) });
+
+            const controlsHtml = `
+                <button onclick="animNet(1)" class="control-btn px-4 py-2 bg-blue-500 text-white rounded-full font-bold shadow-lg">① 面面相加</button>
+                <button onclick="animNet(2)" class="control-btn px-4 py-2 bg-yellow-500 text-white rounded-full font-bold shadow-lg">② 合并大面</button>
+                <button onclick="animNet(3)" class="control-btn px-4 py-2 bg-purple-500 text-white rounded-full font-bold shadow-lg">③ 大面减缺</button>
+                <button onclick="animNet(4)" class="control-btn px-4 py-2 bg-orange-500 text-white rounded-full font-bold shadow-lg">④ 假想有盖</button>
+            `;
+            document.getElementById('dynamic-controls').innerHTML = controlsHtml;
+
+            window.animNet = function(method) {
+                if(netTimeoutId) clearTimeout(netTimeoutId);
+                animations.forEach(anim => { if(anim.targetRot) anim.targetRot.set(0, 0, 0); });
+                corners.forEach(c => c.material.opacity = 0);
+                cornersDashed.forEach(d => d.visible = false);
+                animations.forEach(anim => { if(corners.includes(anim.obj)) anim.targetScale.set(0.001, 0.001, 0.001); });
+                matLid.opacity = 0; matLid.color.setHex(0xf59e0b);
+                animations.find(a => a.obj === lid).target.set(0, 5, 0);
+                
+                if(method === 1) {
+                    showInfo("方法①：面面相加 (常规思维)", "算式：<b>4×1×2 + 3×1×2 + 4×3</b><br>分别计算：2个长侧面(绿) + 2个宽侧面(红) + 1个底面(蓝)。");
+                    matBase.color.setHex(0x3b82f6); matFlapTB.color.setHex(0x10b981); matFlapLR.color.setHex(0xef4444); 
+                } else if (method === 2) {
+                    showInfo("方法②：合并大面 (组合思维)", "算式：<b>3×6 + 4×1×2</b><br>发现底面和左右两个侧面，刚好拼成一个大长方形(黄)！长是 1+4+1=6，宽是 3。");
+                    matBase.color.setHex(0xeab308); matFlapLR.color.setHex(0xeab308); matFlapTB.color.setHex(0x10b981); 
+                } else if (method === 3) {
+                    showInfo("方法③：大面减缺 (剪纸思维)", "算式：<b>5×6 - 1×1×4</b><br>把整个展开图看成大长方形(紫)，然后在四个角“剪掉”4个边长1的正方形废料。");
+                    matBase.color.setHex(0xa855f7); matFlapLR.color.setHex(0xa855f7); matFlapTB.color.setHex(0xa855f7);
+                    cornersDashed.forEach(d => d.visible = true); corners.forEach(c => c.material.opacity = 0.8);
+                    animations.forEach(anim => { if(corners.includes(anim.obj)) { anim.obj.scale.set(1, 1, 1); anim.targetScale.set(0.001, 0.001, 0.001); } });
+                } else if (method === 4) {
+                    showInfo("方法④：整体减盖 (立体思维)", "算式：<b>(4×1+3×1+4×3)×2 - 4×3</b><br>假想它是一个<b>有盖的长方体</b>，算出总表面积，最后减去多余的红顶盖部分！");
+                    matBase.color.setHex(0x3b82f6); matFlapLR.color.setHex(0x3b82f6); matFlapTB.color.setHex(0x3b82f6);
+                    animations.find(a => a.obj === hLeft).targetRot.set(0, 0, -Math.PI/2);
+                    animations.find(a => a.obj === hRight).targetRot.set(0, 0, Math.PI/2);
+                    animations.find(a => a.obj === hTop).targetRot.set(Math.PI/2, 0, 0);
+                    animations.find(a => a.obj === hBottom).targetRot.set(-Math.PI/2, 0, 0);
+                    matLid.opacity = 0.9; matLid.color.setHex(0xf59e0b); 
+                    const lidAnim = animations.find(a => a.obj === lid);
+                    lidAnim.obj.position.set(0, 4, 0); lidAnim.target.set(0, 1, 0); 
+                    netTimeoutId = setTimeout(() => { lidAnim.target.set(0, 3.5, 0); matLid.color.setHex(0xef4444); matLid.opacity = 0.6; }, 2200);
+                }
+            }
+            window.animNet(1); 
+        }
+
+        // --- 渲染与动画循环 ---
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+
+            animations.forEach(anim => {
+                if(anim.obj) {
+                    if(anim.target) anim.obj.position.lerp(anim.target, 0.08);
+                    if(anim.targetScale) anim.obj.scale.lerp(anim.targetScale, 0.08);
+                    if(anim.targetRot) {
+                        anim.obj.rotation.x += (anim.targetRot.x - anim.obj.rotation.x) * 0.08;
+                        anim.obj.rotation.y += (anim.targetRot.y - anim.obj.rotation.y) * 0.08;
+                        anim.obj.rotation.z += (anim.targetRot.z - anim.obj.rotation.z) * 0.08;
+                    }
+                }
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', onWindowResize, false);
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        window.onload = function() {
+            initSceneSplice();
+            animate();
+        };
+
+        window.loadScene = function(sceneName) {
+            controls.target.set(0,0,0); 
+            if(sceneName === 'splice') initSceneSplice();
+            if(sceneName === 'paint') initScenePaint();
+            if(sceneName === 'dig') initSceneDig();
+            if(sceneName === 'sleeve') initSceneBookSleeve();
+            if(sceneName === 'foldbox') initSceneFoldBox();
+            if(sceneName === 'net') initSceneNet();
+        }
+    </script>
+</body>
+</html>
