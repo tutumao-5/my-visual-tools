@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>五年级下册数学：练习十五互动课件</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Lucide 图标 -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* 简单的淡入动画 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50 font-sans text-gray-800">
+
+    <!-- 顶部导航区 -->
+    <header class="bg-white shadow-sm sticky top-0 z-10">
+        <div class="max-w-6xl mx-auto px-4 py-6">
+            <h1 class="text-4xl font-extrabold text-center text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
+                五年级下册数学：练习十五互动课件
+            </h1>
+            
+            <div class="flex flex-wrap justify-center gap-4 mt-8" id="tab-buttons">
+                <!-- 导航按钮由JS生成或手动写入 -->
+                <button onclick="switchTab(1)" id="btn-tab-1" class="tab-btn px-6 py-3 rounded-full text-xl font-bold transition-all duration-300 bg-blue-600 text-white shadow-lg transform scale-105">模块 1: 寻找公因数</button>
+                <button onclick="switchTab(2)" id="btn-tab-2" class="tab-btn px-6 py-3 rounded-full text-xl font-bold transition-all duration-300 bg-gray-100 text-gray-600 hover:bg-gray-200">模块 2: 分数好朋友</button>
+                <button onclick="switchTab(3)" id="btn-tab-3" class="tab-btn px-6 py-3 rounded-full text-xl font-bold transition-all duration-300 bg-gray-100 text-gray-600 hover:bg-gray-200">模块 3: 生活小达人</button>
+                <button onclick="switchTab(4)" id="btn-tab-4" class="tab-btn px-6 py-3 rounded-full text-xl font-bold transition-all duration-300 bg-gray-100 text-gray-600 hover:bg-gray-200">模块 4: 规律探索者</button>
+                <button onclick="switchTab(5)" id="btn-tab-5" class="tab-btn px-6 py-3 rounded-full text-xl font-bold transition-all duration-300 bg-gray-100 text-gray-600 hover:bg-gray-200">模块 5: 互质数揭秘</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主体内容区 -->
+    <main class="max-w-5xl mx-auto px-4 py-8">
+        
+        <!-- ================= 模块一：基础概念 ================= -->
+        <div id="module-1" class="module-content animate-fade-in">
+            <h2 class="text-3xl font-bold mb-6 flex items-center text-indigo-600">
+                <i data-lucide="target" class="mr-3 w-8 h-8"></i> 模块一：温故知新，寻找公因数
+            </h2>
+            
+            <!-- 思考任务 -->
+            <div class="bg-yellow-50 border-l-8 border-yellow-400 p-6 rounded-r-xl shadow-sm mb-8">
+                <h3 class="text-2xl font-bold text-yellow-800 mb-4 flex items-center">
+                    <i data-lucide="help-circle" class="mr-2 w-6 h-6"></i> 思考任务：怎样不遗漏地找到两个数的公因数？
+                </h3>
+                <div class="text-xl text-gray-700 leading-relaxed">
+                    <p>我们以 <strong>10 和 15</strong> 为例。请同学们想一想，我们应该先找什么？再找什么？</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-8 rounded-xl shadow-md border border-gray-100">
+                <div class="space-y-8">
+                    <!-- Step 1 -->
+                    <div class="flex items-start">
+                        <div id="m1-icon-1" class="w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold mr-4 shrink-0 bg-indigo-100 text-indigo-700">1</div>
+                        <div class="flex-1">
+                            <p class="text-2xl font-semibold mb-4">先分别写出 10 和 15 的因数。</p>
+                            <div class="flex flex-col space-y-4">
+                                <div class="flex items-center space-x-4">
+                                    <span class="text-xl w-32">10 的因数：</span>
+                                    <input type="text" id="m1-f10" class="border-2 border-indigo-200 rounded-lg p-3 text-xl flex-1 focus:ring-2 focus:ring-indigo-400" placeholder="请用逗号隔开输入...">
+                                </div>
+                                <div class="flex items-center space-x-4">
+                                    <span class="text-xl w-32">15 的因数：</span>
+                                    <input type="text" id="m1-f15" class="border-2 border-indigo-200 rounded-lg p-3 text-xl flex-1 focus:ring-2 focus:ring-indigo-400" placeholder="请用逗号隔开输入...">
+                                </div>
+                            </div>
+                            <button id="m1-btn-1" onclick="m1Next(1)" class="mt-6 bg-indigo-500 text-white px-6 py-3 rounded-lg text-xl hover:bg-indigo-600 flex items-center">
+                                我们找全了吗？点击核对 <i data-lucide="chevron-right" class="ml-2"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div id="m1-step-2" class="flex items-start animate-fade-in hidden">
+                        <div class="w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold mr-4 shrink-0 bg-indigo-100 text-indigo-700">2</div>
+                        <div class="flex-1">
+                            <div class="bg-indigo-50 p-6 rounded-lg mb-4 text-xl">
+                                <p>核对：</p>
+                                <p class="font-mono mt-2">10 的因数有：<strong>1, 2, 5, 10</strong></p>
+                                <p class="font-mono mt-2">15 的因数有：<strong>1, 3, 5, 15</strong></p>
+                            </div>
+                            <p class="text-2xl font-semibold mb-4">圈出它们共有的因数（公因数）</p>
+                            <button id="m1-btn-2" onclick="m1Next(2)" class="mt-4 bg-indigo-500 text-white px-6 py-3 rounded-lg text-xl hover:bg-indigo-600 flex items-center">
+                                寻找公因数 <i data-lucide="chevron-right" class="ml-2"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div id="m1-step-3" class="flex items-start animate-fade-in hidden">
+                        <div class="w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold mr-4 shrink-0 bg-green-100 text-green-700">3</div>
+                        <div class="flex-1">
+                            <div class="bg-green-50 border border-green-200 p-6 rounded-lg text-2xl">
+                                <p>10 和 15 的公因数有：<strong class="text-green-700 text-3xl mx-2">1, 5</strong></p>
+                                <p class="mt-4">其中最大公因数是：<strong class="text-green-700 text-3xl mx-2">5</strong></p>
+                            </div>
+
+                            <!-- 规律总结组件 -->
+                            <div class="mt-8 p-6 rounded-xl border-l-8 shadow-sm bg-indigo-50 text-indigo-900 border-indigo-400 animate-fade-in transition-all duration-300">
+                                <h4 class="text-2xl font-bold mb-3 flex items-center">
+                                    <i data-lucide="book-open" class="mr-2 w-6 h-6"></i> 规律总结
+                                </h4>
+                                <button id="btn-rule-m1" onclick="showRule('m1')" class="mt-2 px-6 py-3 bg-white text-gray-800 font-bold rounded-lg shadow hover:shadow-md transition flex items-center border border-gray-200 hover:bg-gray-50">
+                                    <i data-lucide="lightbulb" class="mr-2 w-5 h-5 text-yellow-500"></i> 谁来试着总结一下？点击核带规律
+                                </button>
+                                <div id="content-rule-m1" class="text-xl leading-relaxed mt-4 pt-4 border-t border-black/10 animate-fade-in hidden">
+                                    <p><strong>找最大公因数三步曲（列举法）：</strong></p>
+                                    <ol class="list-decimal ml-6 mt-2">
+                                        <li>分别列出两个数的因数。</li>
+                                        <li>找出它们公有的因数（公因数）。</li>
+                                        <li>在公因数中挑出最大的一个。</li>
+                                    </ol>
+                                </div>
+                            </div>
+
+                            <!-- 举一反三组件 -->
+                            <div class="mt-6 bg-white p-6 rounded-xl border-2 border-dashed border-purple-300 shadow-sm animate-fade-in">
+                                <h4 class="text-2xl font-bold mb-4 flex items-center text-purple-700">
+                                    <i data-lucide="zap" class="mr-2 w-6 h-6"></i> 举一反三
+                                </h4>
+                                <div class="text-xl text-gray-800 mb-6"><p>请尝试用刚总结的方法，快速找出 <strong>12 和 18</strong> 的最大公因数。</p></div>
+                                <button id="btn-chal-m1" onclick="showChallenge('m1')" class="px-6 py-3 bg-purple-100 text-purple-700 font-bold rounded-lg hover:bg-purple-200 transition">
+                                    点击查看挑战答案解析
+                                </button>
+                                <div id="content-chal-m1" class="bg-purple-50 p-5 rounded-lg text-lg text-purple-900 border-l-4 border-purple-400 hidden mt-4">
+                                    <strong>💡 答案解析：</strong><div class="mt-2"><p>12的因数有：1, 2, 3, 4, 6, 12。<br/>18的因数有：1, 2, 3, 6, 9, 18。<br/>公因数有 1, 2, 3, 6。<strong>最大公因数是 6。</strong></p></div>
+                                </div>
+                            </div>
+
+                            <button onclick="resetM1()" class="mt-6 text-indigo-600 text-lg hover:underline flex items-center">
+                                重置本题
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= 模块二：分数的好朋友 ================= -->
+        <div id="module-2" class="module-content animate-fade-in hidden">
+            <h2 class="text-3xl font-bold mb-6 flex items-center text-teal-600">
+                <i data-lucide="play-circle" class="mr-3 w-8 h-8"></i> 模块二：为分数约分打基础
+            </h2>
+            
+            <div class="bg-yellow-50 border-l-8 border-yellow-400 p-6 rounded-r-xl shadow-sm mb-8">
+                <h3 class="text-2xl font-bold text-yellow-800 mb-4 flex items-center">
+                    <i data-lucide="help-circle" class="mr-2 w-6 h-6"></i> 思考任务：火眼金睛找关系
+                </h3>
+                <div class="text-xl text-gray-700 leading-relaxed">
+                    <p>在分数中，分子和分母就像一对好朋友。如果我们能一眼看出它们的<strong>最大公因数</strong>，以后学习分数运算会特别快！</p>
+                    <p class="mt-2 text-gray-600">观察下面分数的分子和分母，先在心里算出它们的最大公因数，然后点击分数揭晓答案。</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-8" id="fractions-container">
+                <!-- 由 JS 动态生成卡片 -->
+            </div>
+
+            <div class="mt-8 p-6 rounded-xl border-l-8 shadow-sm bg-teal-50 text-teal-900 border-teal-400 animate-fade-in transition-all duration-300">
+                <h4 class="text-2xl font-bold mb-3 flex items-center">
+                    <i data-lucide="book-open" class="mr-2 w-6 h-6"></i> 规律总结
+                </h4>
+                <button id="btn-rule-m2" onclick="showRule('m2')" class="mt-2 px-6 py-3 bg-white text-gray-800 font-bold rounded-lg shadow hover:shadow-md transition flex items-center border border-gray-200 hover:bg-gray-50">
+                    <i data-lucide="lightbulb" class="mr-2 w-5 h-5 text-yellow-500"></i> 谁来试着总结一下？点击核对规律
+                </button>
+                <div id="content-rule-m2" class="text-xl leading-relaxed mt-4 pt-4 border-t border-black/10 animate-fade-in hidden">
+                    <p><strong>特殊分数的“火眼金睛”：</strong></p>
+                    <ul class="list-disc ml-6 mt-2">
+                        <li><strong>倍数关系：</strong> 如果分母是分子的倍数（如 8 和 36，18 和 72），它们的最大公因数就是那个<strong>较小的数</strong>。</li>
+                        <li><strong>互质关系：</strong> 如果分子分母是相邻的数（如 7 和 8），或者没有除 1 以外的公因数（如 7 和 9），它们的最大公因数就是 <strong>1</strong>。</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-6 bg-white p-6 rounded-xl border-2 border-dashed border-purple-300 shadow-sm animate-fade-in">
+                <h4 class="text-2xl font-bold mb-4 flex items-center text-purple-700">
+                    <i data-lucide="zap" class="mr-2 w-6 h-6"></i> 举一反三
+                </h4>
+                <div class="text-xl text-gray-800 mb-6">
+                    <div class="flex items-center space-x-6"><span>观察右边两个分数，你能一秒说出它们分子分母的最大公因数吗？</span><span class="text-3xl font-serif inline-flex flex-col items-center"><span class="border-b-2 border-black px-2">13</span><span>39</span></span> <span class="text-3xl font-serif inline-flex flex-col items-center"><span class="border-b-2 border-black px-2">8</span><span>9</span></span></div>
+                </div>
+                <button id="btn-chal-m2" onclick="showChallenge('m2')" class="px-6 py-3 bg-purple-100 text-purple-700 font-bold rounded-lg hover:bg-purple-200 transition">点击查看挑战答案解析</button>
+                <div id="content-chal-m2" class="bg-purple-50 p-5 rounded-lg text-lg text-purple-900 border-l-4 border-purple-400 hidden mt-4">
+                    <strong>💡 答案解析：</strong><div class="mt-2"><p>13 和 39 是倍数关系，最大公因数是 <strong>13</strong>。<br/>8 和 9 是相邻数（互质），最大公因数是 <strong>1</strong>。</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= 模块三：生活小达人 ================= -->
+        <div id="module-3" class="module-content animate-fade-in hidden">
+            <h2 class="text-3xl font-bold mb-6 flex items-center text-orange-600">
+                <i data-lucide="lightbulb" class="mr-3 w-8 h-8"></i> 模块三：生活小达人
+            </h2>
+            
+            <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+                <div class="bg-orange-50 p-6 border-b border-orange-100">
+                    <p class="text-2xl leading-relaxed text-gray-800 font-medium">
+                        男生有 <strong class="text-blue-600 text-3xl mx-1">48</strong> 人，女生有 <strong class="text-pink-600 text-3xl mx-1">36</strong> 人，分别站成若干排。
+                        要使<strong class="text-red-500 border-b-2 border-red-500">每排的人数相同</strong>，每排<strong class="text-orange-600">最多</strong>有多少人？
+                        这时男、女生分别有几排？
+                    </p>
+                </div>
+
+                <div class="p-8 space-y-8">
+                    <!-- 步骤1 -->
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h4 class="text-2xl font-bold mb-4 flex items-center text-gray-700">
+                            <span class="bg-orange-500 text-white w-8 h-8 rounded-full inline-flex items-center justify-center mr-3 text-xl">1</span>
+                            数学翻译官：分析“人数相同”
+                        </h4>
+                        <div class="space-y-4 text-xl">
+                            <p>💡 “男生和女生每排的<span class="text-red-500">人数相同</span>”，这说明每排的人数必须是 48 和 36 的什么数？</p>
+                            <div id="m3-q1-buttons" class="flex space-x-4 mt-4">
+                                <button onclick="alert('再想想哦，人数不能超过总数，只能是能整除它们的数。')" class="px-6 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-100">是它们的倍数</button>
+                                <button onclick="m3Next(1)" class="px-6 py-3 border-2 border-orange-400 text-orange-700 bg-orange-50 rounded-lg hover:bg-orange-100 font-bold">是它们的公因数</button>
+                            </div>
+                            <p id="m3-q1-answer" class="text-green-600 font-bold bg-green-50 p-4 rounded-lg inline-block hidden">答对了！每排的人数必须是 48 和 36 的【公因数】。</p>
+                        </div>
+                    </div>
+
+                    <!-- 步骤2 -->
+                    <div id="m3-step-2" class="bg-gray-50 rounded-lg p-6 animate-fade-in hidden">
+                        <h4 class="text-2xl font-bold mb-4 flex items-center text-gray-700">
+                            <span class="bg-orange-500 text-white w-8 h-8 rounded-full inline-flex items-center justify-center mr-3 text-xl">2</span>
+                            锁定目标：分析“最多”
+                        </h4>
+                        <div class="space-y-4 text-xl">
+                            <p>💡 题目不仅要求人数相同，还要求每排的人数<span class="text-orange-600 font-bold">最多</span>，实际上就是求 48 和 36 的什么？</p>
+                            <button id="m3-btn-2" onclick="m3Next(2)" class="mt-4 bg-orange-500 text-white px-6 py-3 rounded-lg text-xl hover:bg-orange-600">点击揭晓</button>
+                            <div id="m3-q2-answer" class="space-y-4 hidden">
+                                <p class="text-green-600 font-bold bg-green-50 p-4 rounded-lg">就是求 48 和 36 的【最大公因数】。</p>
+                                <div class="bg-orange-50 p-6 border border-orange-200 rounded-lg text-2xl flex items-center justify-center font-bold text-gray-800">
+                                    48 和 36 的最大公因数是 <strong class="text-orange-600 text-4xl mx-3">12</strong> 
+                                    <span class="text-xl ml-2 font-normal text-gray-600">（所以每排最多有 12 人）</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 步骤3 -->
+                    <div id="m3-step-3" class="bg-gray-50 rounded-lg p-6 animate-fade-in hidden">
+                        <h4 class="text-2xl font-bold mb-4 flex items-center text-gray-700">
+                            <span class="bg-orange-500 text-white w-8 h-8 rounded-full inline-flex items-center justify-center mr-3 text-xl">3</span>
+                            乘胜追击：算排数
+                        </h4>
+                        <div class="space-y-4 text-xl">
+                            <p>💡 既然知道每排最多 12 人了，那男生和女生分别排了几排呢？</p>
+                            <button id="m3-btn-3" onclick="m3Next(3)" class="mt-4 bg-orange-500 text-white px-6 py-3 rounded-lg text-xl hover:bg-orange-600">核对算式与答案</button>
+                            <div id="m3-q3-answer" class="flex flex-col space-y-4 bg-blue-50 p-6 border border-blue-200 rounded-lg hidden">
+                                <p class="text-2xl flex items-center">
+                                    <span class="w-24 text-blue-800 font-bold">男生：</span> 
+                                    <span class="font-mono bg-white px-4 py-2 rounded shadow-sm border border-blue-100">48 ÷ 12 = <strong class="text-blue-600 text-3xl">4</strong> (排)</span>
+                                </p>
+                                <p class="text-2xl flex items-center">
+                                    <span class="w-24 text-pink-800 font-bold">女生：</span> 
+                                    <span class="font-mono bg-white px-4 py-2 rounded shadow-sm border border-pink-100">36 ÷ 12 = <strong class="text-pink-600 text-3xl">3</strong> (排)</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div id="m3-final-summary" class="mt-8 animate-fade-in hidden">
+                            <div class="mt-8 p-6 rounded-xl border-l-8 shadow-sm bg-orange-50 text-orange-900 border-orange-400 animate-fade-in transition-all duration-300">
+                                <h4 class="text-2xl font-bold mb-3 flex items-center">
+                                    <i data-lucide="book-open" class="mr-2 w-6 h-6"></i> 规律总结
+                                </h4>
+                                <button id="btn-rule-m3" onclick="showRule('m3')" class="mt-2 px-6 py-3 bg-white text-gray-800 font-bold rounded-lg shadow hover:shadow-md transition flex items-center border border-gray-200 hover:bg-gray-50">
+                                    <i data-lucide="lightbulb" class="mr-2 w-5 h-5 text-yellow-500"></i> 谁来试着总结一下？点击核对规律
+                                </button>
+                                <div id="content-rule-m3" class="text-xl leading-relaxed mt-4 pt-4 border-t border-black/10 animate-fade-in hidden">
+                                    <p><strong>应用题解题秘籍（抓字眼）：</strong></p>
+                                    <p class="mt-2">看到“<strong>平均分</strong>”、“<strong>每份同样多</strong>”、“<strong>没有剩余</strong>” &rightarrow; 联想到求<strong>公因数</strong>。</p>
+                                    <p>再看到“<strong>最多</strong>”、“<strong>最大</strong>”、“<strong>最长</strong>” &rightarrow; 锁定求<strong>最大公因数</strong>！</p>
+                                </div>
+                            </div>
+
+                            <div class="mt-6 bg-white p-6 rounded-xl border-2 border-dashed border-purple-300 shadow-sm animate-fade-in">
+                                <h4 class="text-2xl font-bold mb-4 flex items-center text-purple-700">
+                                    <i data-lucide="zap" class="mr-2 w-6 h-6"></i> 举一反三
+                                </h4>
+                                <div class="text-xl text-gray-800 mb-6">
+                                    <p>有一张长方形纸，长 70 cm，宽 50 cm。如果要剪成若干张同样大小的正方形而没有剩余，剪出的正方形的边长<strong>最大</strong>是多少厘米？（还记得这道题吗？）</p>
+                                </div>
+                                <button id="btn-chal-m3" onclick="showChallenge('m3')" class="px-6 py-3 bg-purple-100 text-purple-700 font-bold rounded-lg hover:bg-purple-200 transition">点击查看挑战答案解析</button>
+                                <div id="content-chal-m3" class="bg-purple-50 p-5 rounded-lg text-lg text-purple-900 border-l-4 border-purple-400 hidden mt-4">
+                                    <strong>💡 答案解析：</strong><div class="mt-2"><p>抓字眼：“没有剩余”、“最大”。其实就是求 70 和 50 的最大公因数。70 和 50 的最大公因数是 <strong>10</strong>。所以正方形边长最大是 10 cm。</p></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= 模块四：规律探索者 ================= -->
+        <div id="module-4" class="module-content animate-fade-in hidden">
+            <h2 class="text-3xl font-bold mb-6 flex items-center text-purple-600">
+                <i data-lucide="target" class="mr-3 w-8 h-8"></i> 模块四：规律探索者
+            </h2>
+            
+            <div class="bg-yellow-50 border-l-8 border-yellow-400 p-6 rounded-r-xl shadow-sm mb-8">
+                <h3 class="text-2xl font-bold text-yellow-800 mb-4 flex items-center">
+                    <i data-lucide="help-circle" class="mr-2 w-6 h-6"></i> 思考任务：寻找隐藏的密码
+                </h3>
+                <div class="text-xl text-gray-700 leading-relaxed">
+                    <p>分别写出 1, 2, 3... 20 各数与 <strong>5</strong> 的最大公因数。你能在表格中发现什么神奇的规律吗？</p>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto mb-8">
+                <table class="w-full text-center border-collapse text-xl">
+                    <thead>
+                        <tr id="m4-thead">
+                            <th class="border-2 border-purple-200 bg-purple-50 p-3">数</th>
+                            <!-- JS 生成 1-20 -->
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr id="m4-tbody">
+                            <td class="border-2 border-purple-200 bg-purple-50 p-3 font-bold">与 5 的<br/>最大公因数</td>
+                            <!-- JS 生成 -->
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="text-center">
+                <button id="m4-fill-btn" onclick="m4FillTable()" class="bg-purple-600 text-white px-8 py-4 rounded-full text-2xl hover:bg-purple-700 shadow-lg transition transform hover:scale-105">
+                    填满表格，召唤规律！
+                </button>
+                
+                <div id="m4-rules" class="animate-fade-in text-left hidden mt-8">
+                    <div class="p-6 rounded-xl border-l-8 shadow-sm bg-purple-100 text-purple-900 border-purple-500 animate-fade-in transition-all duration-300">
+                        <h4 class="text-2xl font-bold mb-3 flex items-center">
+                            <i data-lucide="book-open" class="mr-2 w-6 h-6"></i> 规律总结
+                        </h4>
+                        <button id="btn-rule-m4" onclick="showRule('m4')" class="mt-2 px-6 py-3 bg-white text-gray-800 font-bold rounded-lg shadow hover:shadow-md transition flex items-center border border-gray-200 hover:bg-gray-50">
+                            <i data-lucide="lightbulb" class="mr-2 w-5 h-5 text-yellow-500"></i> 谁来试着总结一下？点击核对规律
+                        </button>
+                        <div id="content-rule-m4" class="text-xl leading-relaxed mt-4 pt-4 border-t border-black/10 animate-fade-in hidden">
+                            <p class="leading-relaxed">1. <strong>倍数规律：</strong> 每数到 5 的倍数时（5, 10, 15, 20...），它与 5 的最大公因数就是 <strong>5</strong>。</p>
+                            <p class="mt-2 leading-relaxed">2. <strong>质数规律：</strong> 因为 5 是质数，其他不是 5 的倍数的数，与 5 互质，它们的最大公因数都是 <strong>1</strong>。</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 bg-white p-6 rounded-xl border-2 border-dashed border-purple-300 shadow-sm animate-fade-in">
+                        <h4 class="text-2xl font-bold mb-4 flex items-center text-purple-700">
+                            <i data-lucide="zap" class="mr-2 w-6 h-6"></i> 举一反三
+                        </h4>
+                        <div class="text-xl text-gray-800 mb-6">
+                            <p>不计算，请直接说出下面各组数的最大公因数：<br/><br/>(1) 99 和 5 的最大公因数是多少？<br/>(2) 100 和 5 的最大公因数是多少？</p>
+                        </div>
+                        <button id="btn-chal-m4" onclick="showChallenge('m4')" class="px-6 py-3 bg-purple-100 text-purple-700 font-bold rounded-lg hover:bg-purple-200 transition">点击查看挑战答案解析</button>
+                        <div id="content-chal-m4" class="bg-purple-50 p-5 rounded-lg text-lg text-purple-900 border-l-4 border-purple-400 hidden mt-4">
+                            <strong>💡 答案解析：</strong><div class="mt-2"><p>(1) 99 不是 5 的倍数，所以 99 和 5 的最大公因数是 <strong>1</strong>。<br/>(2) 100 是 5 的倍数，所以 100 和 5 的最大公因数是 <strong>5</strong>。</p></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= 模块五：互质数揭秘 ================= -->
+        <div id="module-5" class="module-content animate-fade-in hidden">
+            <h2 class="text-3xl font-bold mb-6 flex items-center text-rose-600">
+                <i data-lucide="alert-circle" class="mr-3 w-8 h-8"></i> 模块五：互质数大揭秘
+            </h2>
+            
+            <div class="bg-gradient-to-r from-rose-50 to-pink-50 p-8 rounded-2xl shadow-sm mb-8 border border-rose-100">
+                <h3 class="text-3xl font-bold text-rose-800 mb-4 flex items-center">📖 知识加油站：什么是互质数？</h3>
+                <p class="text-2xl text-gray-800 leading-relaxed bg-white p-6 rounded-xl shadow-inner">
+                    公因数<strong class="text-rose-600 text-3xl mx-2">只有 1</strong>的两个数，叫作<strong>互质数</strong>。<br/>
+                    例如：5 和 7 的最大公因数是 1，所以 5 和 7 互质。
+                </p>
+            </div>
+
+            <div class="bg-yellow-50 border-l-8 border-yellow-400 p-6 rounded-r-xl shadow-sm mb-8">
+                <h3 class="text-2xl font-bold text-yellow-800 mb-4 flex items-center">
+                    <i data-lucide="help-circle" class="mr-2 w-6 h-6"></i> 思考任务：概念大辩论
+                </h3>
+                <div class="text-xl text-gray-700 leading-relaxed">
+                    <p class="text-2xl text-center my-4 font-bold">想一想：互质的两个数，必须都是质数吗？</p>
+                    <div id="m5-debate-btns" class="flex justify-center space-x-8 mt-8">
+                        <button onclick="m5ShowProof()" class="bg-white border-4 border-green-400 text-green-700 px-8 py-4 rounded-xl text-2xl font-bold hover:bg-green-50">一定是质数</button>
+                        <button onclick="m5ShowProof()" class="bg-white border-4 border-rose-400 text-rose-700 px-8 py-4 rounded-xl text-2xl font-bold hover:bg-rose-50">不一定是质数</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="m5-proof" class="bg-white p-8 rounded-xl shadow-md border-t-8 border-rose-400 animate-fade-in hidden">
+                <p class="text-2xl font-bold mb-6 text-center text-gray-800">让我们用实例来证明：<strong class="text-rose-600">不一定都是质数！</strong></p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-gray-50 p-6 rounded-lg text-center border border-gray-200">
+                        <p class="text-xl text-gray-600 mb-2">情况一：两个都是质数</p>
+                        <p class="text-3xl font-bold text-gray-800">2 和 3</p>
+                        <p class="text-lg text-green-600 mt-4">✓ 互质</p>
+                    </div>
+                    <div class="bg-rose-50 p-6 rounded-lg text-center border border-rose-200 transform scale-105 shadow-md">
+                        <p class="text-xl text-rose-700 mb-2 font-bold">情况二：两个都是合数</p>
+                        <p class="text-3xl font-bold text-gray-800">8 和 9</p>
+                        <p class="text-lg text-green-600 mt-4">✓ 互质 (最大公因数是1)</p>
+                    </div>
+                    <div class="bg-gray-50 p-6 rounded-lg text-center border border-gray-200">
+                        <p class="text-xl text-gray-600 mb-2">情况三：一质一合</p>
+                        <p class="text-3xl font-bold text-gray-800">3 和 4</p>
+                        <p class="text-lg text-green-600 mt-4">✓ 互质</p>
+                    </div>
+                </div>
+                <div class="mt-8 text-center text-xl text-gray-600 bg-gray-100 p-4 rounded-lg">
+                    <strong>结论：</strong>只要两个数的最大公因数是1，它们就是互质数，与它们本身是质数还是合数没有直接关系哦！
+                </div>
+
+                <div class="mt-8 p-6 rounded-xl border-l-8 shadow-sm bg-rose-50 text-rose-900 border-rose-400 animate-fade-in transition-all duration-300">
+                    <h4 class="text-2xl font-bold mb-3 flex items-center">
+                        <i data-lucide="book-open" class="mr-2 w-6 h-6"></i> 规律总结
+                    </h4>
+                    <button id="btn-rule-m5" onclick="showRule('m5')" class="mt-2 px-6 py-3 bg-white text-gray-800 font-bold rounded-lg shadow hover:shadow-md transition flex items-center border border-gray-200 hover:bg-gray-50">
+                        <i data-lucide="lightbulb" class="mr-2 w-5 h-5 text-yellow-500"></i> 谁来试着总结一下？点击核对规律
+                    </button>
+                    <div id="content-rule-m5" class="text-xl leading-relaxed mt-4 pt-4 border-t border-black/10 animate-fade-in hidden">
+                        <p><strong>秒判互质数的“三大法宝”：</strong></p>
+                        <ul class="list-disc ml-6 mt-2">
+                            <li><strong>相邻数法宝：</strong> 任意两个相邻的自然数（0除外）一定互质。（例如：8和9，14和15）</li>
+                            <li><strong>双质数法宝：</strong> 任意两个不同的质数一定互质。（例如：2和3，7和11）</li>
+                            <li><strong>1的法宝：</strong> 1 和任何非零自然数都互质。</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="mt-6 bg-white p-6 rounded-xl border-2 border-dashed border-purple-300 shadow-sm animate-fade-in">
+                    <h4 class="text-2xl font-bold mb-4 flex items-center text-purple-700">
+                        <i data-lucide="zap" class="mr-2 w-6 h-6"></i> 举一反三
+                    </h4>
+                    <div class="text-xl text-gray-800 mb-6">
+                        <p>判断大比拼！下面哪几组数是互质数？（请用“法宝”快速判断）<br/><br/>A. 14 和 15 &nbsp;&nbsp;&nbsp; B. 7 和 11 &nbsp;&nbsp;&nbsp; C. 10 和 12</p>
+                    </div>
+                    <button id="btn-chal-m5" onclick="showChallenge('m5')" class="px-6 py-3 bg-purple-100 text-purple-700 font-bold rounded-lg hover:bg-purple-200 transition">点击查看挑战答案解析</button>
+                    <div id="content-chal-m5" class="bg-purple-50 p-5 rounded-lg text-lg text-purple-900 border-l-4 border-purple-400 hidden mt-4">
+                        <strong>💡 答案解析：</strong><div class="mt-2"><p><strong>A 是互质数</strong>（利用了相邻数法宝）。<br/><strong>B 是互质数</strong>（利用了双质数法宝）。<br/>C 不是互质数，因为它们都是偶数，公因数至少有 2。</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- 底部信息 -->
+    <footer class="text-center py-8 text-gray-500 text-lg">
+        <p>用心做教育，让每个孩子都能体验数学的乐趣！</p>
+    </footer>
+
+    <!-- JavaScript 逻辑交互代码 -->
+    <script>
+        // 初始化 Lucide 图标
+        lucide.createIcons();
+
+        // 切换模块 Tab
+        function switchTab(tabId) {
+            // 隐藏所有模块
+            document.querySelectorAll('.module-content').forEach(el => el.classList.add('hidden'));
+            // 显示目标模块
+            document.getElementById(`module-${tabId}`).classList.remove('hidden');
+            
+            // 更新按钮样式
+            for(let i=1; i<=5; i++) {
+                const btn = document.getElementById(`btn-tab-${i}`);
+                if (i === tabId) {
+                    btn.className = "tab-btn px-6 py-3 rounded-full text-xl font-bold transition-all duration-300 bg-blue-600 text-white shadow-lg transform scale-105";
+                } else {
+                    btn.className = "tab-btn px-6 py-3 rounded-full text-xl font-bold transition-all duration-300 bg-gray-100 text-gray-600 hover:bg-gray-200";
+                }
+            }
+        }
+
+        // ================= 模块一 逻辑 =================
+        function m1Next(step) {
+            if (step === 1) {
+                document.getElementById('m1-btn-1').classList.add('hidden');
+                document.getElementById('m1-step-2').classList.remove('hidden');
+            } else if (step === 2) {
+                document.getElementById('m1-btn-2').classList.add('hidden');
+                document.getElementById('m1-step-3').classList.remove('hidden');
+            }
+            lucide.createIcons();
+        }
+        function resetM1() {
+            document.getElementById('m1-f10').value = '';
+            document.getElementById('m1-f15').value = '';
+            document.getElementById('m1-step-2').classList.add('hidden');
+            document.getElementById('m1-step-3').classList.add('hidden');
+            document.getElementById('m1-btn-1').classList.remove('hidden');
+            document.getElementById('m1-btn-2').classList.remove('hidden');
+        }
+
+        // ================= 模块二 逻辑 =================
+        const fractionsData = [
+            { id: 1, num: 7, den: 9, gcf: 1 },
+            { id: 2, num: 8, den: 36, gcf: 4 },
+            { id: 3, num: 18, den: 72, gcf: 18 },
+            { id: 4, num: 9, den: 15, gcf: 3 },
+            { id: 5, num: 21, den: 49, gcf: 7 },
+            { id: 6, num: 11, den: 66, gcf: 11 }
+        ];
+
+        function renderFractions() {
+            const container = document.getElementById('fractions-container');
+            let html = '';
+            fractionsData.forEach(f => {
+                html += `
+                <div class="bg-white rounded-2xl shadow-lg p-6 text-center border-b-4 border-teal-500 cursor-pointer transform transition hover:-translate-y-1" onclick="revealFraction(${f.id}, ${f.gcf})">
+                    <div class="text-4xl font-serif mb-6 inline-block">
+                        <div class="border-b-4 border-black px-4 pb-1">${f.num}</div>
+                        <div class="pt-2">${f.den}</div>
+                    </div>
+                    <div id="frac-res-${f.id}" class="h-16 flex items-center justify-center rounded-lg transition-all duration-500 bg-gray-100 hover:bg-gray-200">
+                        <span id="frac-txt-${f.id}" class="text-xl text-gray-500">点击查看</span>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function revealFraction(id, gcf) {
+            const box = document.getElementById(`frac-res-${id}`);
+            const txt = document.getElementById(`frac-txt-${id}`);
+            box.classList.remove('bg-gray-100', 'hover:bg-gray-200');
+            box.classList.add('bg-teal-100');
+            txt.className = "text-2xl font-bold text-teal-800";
+            txt.innerHTML = `最大公因数：${gcf}`;
+        }
+        // 初始化分数模块
+        renderFractions();
+
+        // ================= 模块三 逻辑 =================
+        function m3Next(step) {
+            if (step === 1) {
+                document.getElementById('m3-q1-buttons').classList.add('hidden');
+                document.getElementById('m3-q1-answer').classList.remove('hidden');
+                document.getElementById('m3-step-2').classList.remove('hidden');
+            } else if (step === 2) {
+                document.getElementById('m3-btn-2').classList.add('hidden');
+                document.getElementById('m3-q2-answer').classList.remove('hidden');
+                document.getElementById('m3-step-3').classList.remove('hidden');
+            } else if (step === 3) {
+                document.getElementById('m3-btn-3').classList.add('hidden');
+                document.getElementById('m3-q3-answer').classList.remove('hidden');
+                document.getElementById('m3-final-summary').classList.remove('hidden');
+            }
+            lucide.createIcons();
+        }
+
+        // ================= 模块四 逻辑 =================
+        function renderM4Table() {
+            const trHead = document.getElementById('m4-thead');
+            const trBody = document.getElementById('m4-tbody');
+            
+            for(let i=1; i<=20; i++) {
+                // Th
+                const th = document.createElement('th');
+                th.className = "border-2 border-purple-200 bg-gray-50 p-3 min-w-[3rem]";
+                th.innerText = i;
+                trHead.appendChild(th);
+                
+                // Td
+                const td = document.createElement('td');
+                td.id = `m4-td-${i}`;
+                td.className = "border-2 border-purple-200 p-3 font-bold text-gray-600";
+                td.innerText = '?';
+                trBody.appendChild(td);
+            }
+        }
+        
+        function m4FillTable() {
+            document.getElementById('m4-fill-btn').classList.add('hidden');
+            document.getElementById('m4-rules').classList.remove('hidden');
+            
+            for(let i=1; i<=20; i++) {
+                const td = document.getElementById(`m4-td-${i}`);
+                if (i % 5 === 0) {
+                    td.innerText = '5';
+                    td.className = "border-2 border-purple-200 p-3 font-bold text-red-600 bg-red-50 text-2xl";
+                } else {
+                    td.innerText = '1';
+                }
+            }
+        }
+        // 初始化M4表格
+        renderM4Table();
+
+        // ================= 模块五 逻辑 =================
+        function m5ShowProof() {
+            document.getElementById('m5-debate-btns').classList.add('hidden');
+            document.getElementById('m5-proof').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        // ================= 公共组件逻辑 (规律 & 挑战) =================
+        function showRule(moduleId) {
+            document.getElementById(`btn-rule-${moduleId}`).classList.add('hidden');
+            document.getElementById(`content-rule-${moduleId}`).classList.remove('hidden');
+        }
+
+        function showChallenge(moduleId) {
+            document.getElementById(`btn-chal-${moduleId}`).classList.add('hidden');
+            document.getElementById(`content-chal-${moduleId}`).classList.remove('hidden');
+        }
+
+    </script>
+</body>
+</html>
