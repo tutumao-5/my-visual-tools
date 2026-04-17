@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>探索最小公倍数 - 铺正方形问题</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 动画与样式 */
+        .tile-enter {
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            opacity: 0;
+            transform: scale(0.5);
+        }
+        @keyframes popIn {
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        /* 定义带斜线的红色空隙警告背景 */
+        .bg-stripe-red {
+            background-image: repeating-linear-gradient(
+                45deg,
+                #fee2e2,
+                #fee2e2 10px,
+                #fecaca 10px,
+                #fecaca 20px
+            );
+        }
+        /* 地砖内部网格线，增加质感 */
+        .tile-pattern {
+            background-image: 
+                linear-gradient(to right, rgba(255,255,255,0.2) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255,255,255,0.2) 1px, transparent 1px);
+            background-size: 15px 15px; /* 取决于 UNIT 大小，此处用15px做纹理 */
+        }
+        /* 手动拼砖区网格底图 */
+        .workspace-grid {
+            background-size: 45px 45px;
+            background-image: 
+                linear-gradient(to right, #e5e7eb 1px, transparent 1px), 
+                linear-gradient(to bottom, #e5e7eb 1px, transparent 1px);
+        }
+    </style>
+</head>
+<body class="bg-blue-50 min-h-screen font-sans text-gray-800 pb-20">
+
+    <!-- 顶部标题区 -->
+    <header class="bg-blue-600 text-white shadow-md py-6 mb-8">
+        <div class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between">
+            <h1 class="text-4xl font-bold tracking-wider mb-4 md:mb-0">探索“最小公倍数”的应用</h1>
+            <div class="flex items-center space-x-4">
+                <span id="header-step-indicator" class="text-xl bg-blue-700 px-4 py-2 rounded-lg font-bold shadow-inner">当前：第 1 步 / 共 4 步</span>
+                <span class="text-xl bg-blue-500 px-4 py-2 rounded-full shadow-inner">五年级下册数学</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 space-y-8">
+
+        <!-- 第一部分：阅读与理解 -->
+        <section id="step-1" class="bg-white rounded-2xl shadow-lg p-8 border-l-8 border-blue-400 animate-fade">
+            <div class="flex items-center mb-4">
+                <div class="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg text-2xl font-bold flex items-center">
+                    <svg class="w-8 h-8 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                    第一步：阅读与理解
+                </div>
+            </div>
+            
+            <p class="text-3xl leading-relaxed text-gray-700 mb-6 mt-4">
+                一种长方形地砖<span id="info-length" class="transition-all duration-500">长 3 dm</span>，<span id="info-width" class="transition-all duration-500">宽 2 dm</span>。<br>
+                如果用这种地砖铺一个<span id="info-square" class="transition-all duration-500">正方形</span>（用的地砖必须都是<span id="info-integer" class="transition-all duration-500">整块的</span>）。
+            </p>
+
+            <div class="mb-8 flex justify-start" id="reveal-btn-container">
+                <button onclick="revealMathInfo()" class="px-6 py-3 bg-blue-100 text-blue-700 border-2 border-blue-400 text-2xl font-bold rounded-xl hover:bg-blue-200 transition-all shadow-sm flex items-center transform hover:scale-105">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    点击提取关键数学信息并思考
+                </button>
+            </div>
+
+            <div id="thinking-task" class="hidden bg-yellow-50 border-2 border-yellow-200 rounded-xl p-6 opacity-0 transition-opacity duration-700">
+                <p class="text-3xl font-bold text-yellow-800 flex items-center">
+                    <span class="text-4xl mr-3">❓</span> 思考任务：
+                </p>
+                <ul class="list-disc list-inside text-3xl text-yellow-900 mt-4 space-y-4 ml-4">
+                    <li><span class="font-bold underline decoration-yellow-400">要拼成的正方形的边长，与地砖的长和宽有什么关系？</span></li>
+                    <li>正方形的边长可以是多少分米？</li>
+                    <li>最小是多少分米？</li>
+                </ul>
+            </div>
+            
+            <!-- 第一步导航按钮区 -->
+            <div class="mt-12 flex justify-center border-t border-gray-100 pt-8">
+                <button onclick="goToStep(2)" class="px-10 py-5 bg-yellow-500 text-white text-3xl font-bold rounded-2xl hover:bg-yellow-600 transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-1 flex items-center">
+                    进入下一步：自由摆一摆 <svg class="w-8 h-8 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </button>
+            </div>
+        </section>
+
+        <!-- 第二部分：自由探索 (新增的平移拖拽步骤) -->
+        <section id="step-2" class="hidden bg-white rounded-2xl shadow-lg p-8 border-l-8 border-yellow-400">
+            <div class="flex items-center justify-between mb-6">
+                <div class="bg-yellow-100 text-yellow-700 px-4 py-2 rounded-lg text-2xl font-bold flex items-center">
+                    <svg class="w-8 h-8 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg>
+                    第二步：动手拼一拼（平移与探索）
+                </div>
+            </div>
+
+            <!-- 优化：将布局改为垂直堆叠，状态反馈横幅顶置 -->
+            <div class="flex flex-col items-center gap-6 w-full">
+                
+                <!-- 顶部：操作指引与按钮 -->
+                <div class="flex flex-col md:flex-row justify-between items-center w-full max-w-[810px] bg-gray-50 p-4 rounded-xl border border-gray-200">
+                    <p class="text-2xl text-gray-700">点击添加，并<strong class="text-red-500 text-3xl mx-1">拖动</strong>地砖平移，尝试拼出一个正方形。</p>
+                    <div class="space-x-4 mt-4 md:mt-0 flex">
+                        <button onclick="addManualTile()" class="px-6 py-3 bg-blue-500 text-white text-xl font-bold rounded-lg shadow-md hover:bg-blue-600 transition flex items-center transform hover:scale-105">
+                            <svg class="w-6 h-6 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> 添加地砖
+                        </button>
+                        <button onclick="clearManualTiles()" class="px-6 py-3 bg-white border-2 border-gray-300 text-gray-600 text-xl font-bold rounded-lg shadow-sm hover:bg-gray-100 transition">清空</button>
+                    </div>
+                </div>
+
+                <!-- 中间：智能实时状态面板 (横向横幅样式，居中放置在视线核心区) -->
+                <div id="manual-status-panel" class="w-full max-w-[810px] min-h-[130px] border-4 border-dashed border-gray-300 rounded-xl p-6 flex items-center justify-center bg-gray-50 transition-all duration-300 shadow-sm">
+                    <div class="flex items-center gap-6 w-full justify-center">
+                        <div class="text-5xl text-gray-300">👇</div>
+                        <div class="text-3xl text-gray-500 font-bold text-left">请点击上方“添加地砖”按钮，<br>并在下方画布中开始拼摆。</div>
+                    </div>
+                </div>
+
+                <!-- 底部：拖拽画布区域 (尺寸 18dm x 12dm，居中对齐) -->
+                <div id="manual-workspace" class="relative workspace-grid border-4 border-gray-400 overflow-hidden shadow-inner touch-none bg-white flex-shrink-0" style="width: 810px; height: 540px;">
+                    <!-- 动态生成的地砖将在这里面 -->
+                </div>
+                
+            </div>
+
+            <!-- 第二步导航按钮区 -->
+            <div class="mt-12 flex flex-col md:flex-row justify-between items-center border-t border-gray-100 pt-8 gap-4">
+                <button onclick="goToStep(1)" class="px-8 py-4 bg-gray-400 text-white text-2xl font-bold rounded-xl hover:bg-gray-500 transition-all shadow-lg flex items-center w-full md:w-auto justify-center">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg> 返回思考任务
+                </button>
+                <button onclick="goToStep(3)" class="px-8 py-4 bg-blue-600 text-white text-2xl font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg transform hover:-translate-y-1 flex items-center w-full md:w-auto justify-center">
+                    进入下一步：目标验证 <svg class="w-6 h-6 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </button>
+            </div>
+        </section>
+
+        <!-- 第三部分：目标验证 (原第二步) -->
+        <section id="step-3" class="hidden bg-white rounded-2xl shadow-lg p-8 border-l-8 border-green-400">
+            <div class="flex items-center mb-6">
+                <div class="bg-green-100 text-green-700 px-4 py-2 rounded-lg text-2xl font-bold flex items-center">
+                    <svg class="w-8 h-8 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path></svg>
+                    第三步：目标验证（动画推演）
+                </div>
+            </div>
+            
+            <p class="text-2xl text-gray-600 mb-6">老师提示：除了刚才我们拼出的正方形，还有其他的可能吗？请点击下方设定的目标边长进行验证。</p>
+
+            <!-- 操作按钮：选择目标正方形的边长 -->
+            <div class="flex flex-wrap gap-4 mb-10">
+                <button onclick="drawTiles(4)" class="btn-tile px-6 py-4 rounded-xl text-2xl font-bold bg-white border-4 border-gray-300 text-gray-700 hover:bg-gray-100 hover:border-blue-500 transition-all shadow-sm">目标边长 4 dm</button>
+                <button onclick="drawTiles(5)" class="btn-tile px-6 py-4 rounded-xl text-2xl font-bold bg-white border-4 border-gray-300 text-gray-700 hover:bg-gray-100 hover:border-blue-500 transition-all shadow-sm">目标边长 5 dm</button>
+                <button onclick="drawTiles(6)" class="btn-tile px-6 py-4 rounded-xl text-2xl font-bold bg-white border-4 border-gray-300 text-gray-700 hover:bg-gray-100 hover:border-blue-500 transition-all shadow-sm">目标边长 6 dm</button>
+                <button onclick="drawTiles(9)" class="btn-tile px-6 py-4 rounded-xl text-2xl font-bold bg-white border-4 border-gray-300 text-gray-700 hover:bg-gray-100 hover:border-blue-500 transition-all shadow-sm">目标边长 9 dm</button>
+                <button onclick="drawTiles(12)" class="btn-tile px-6 py-4 rounded-xl text-2xl font-bold bg-white border-4 border-gray-300 text-gray-700 hover:bg-gray-100 hover:border-blue-500 transition-all shadow-sm">目标边长 12 dm</button>
+            </div>
+
+            <!-- 可视化演示区 -->
+            <div class="flex flex-col lg:flex-row gap-12 items-start justify-center">
+                
+                <!-- 容器外围包裹一层，固定大小，中心对齐 -->
+                <div class="relative pt-12 pl-16 pr-8 pb-8 flex justify-center items-center min-h-[600px] w-full lg:w-[650px] bg-gray-50 rounded-xl border border-gray-200 shadow-inner">
+                    
+                    <!-- 顶部和左侧的尺子标注 (动态显示) -->
+                    <div id="top-ruler" class="absolute top-4 left-16 right-8 flex items-center justify-center space-x-4 opacity-0 transition-opacity">
+                        <span id="top-ruler-text" class="text-2xl font-bold text-purple-600">目标边长 ? dm</span>
+                    </div>
+                    <div id="left-ruler" class="absolute left-4 top-12 bottom-8 flex flex-col items-center justify-center space-y-4 opacity-0 transition-opacity">
+                        <span id="left-ruler-text" class="text-2xl font-bold text-purple-600" style="writing-mode: vertical-rl;">目标边长 ? dm</span>
+                    </div>
+
+                    <!-- 动态伸缩的网格绘制区 -->
+                    <div id="floor-container" class="relative bg-white border-4 border-dashed border-gray-400 overflow-visible transition-all duration-500 flex items-center justify-center" style="width: 300px; height: 300px;">
+                        <span id="placeholder-text" class="text-2xl text-gray-400 font-bold tracking-widest text-center px-4">请点击上方按钮<br>设定目标正方形</span>
+                    </div>
+                </div>
+
+                <!-- 实时反馈面板 -->
+                <div id="feedback-panel" class="w-full lg:w-96 min-h-[300px] border-4 border-dashed border-gray-300 rounded-2xl p-8 flex flex-col justify-center items-center text-center bg-white transition-all duration-300 shadow-sm">
+                    <p class="text-2xl text-gray-500 font-bold">观察拼砖情况，这里会显示分析结果。</p>
+                </div>
+            </div>
+
+            <!-- 第三步导航按钮区 -->
+            <div class="mt-12 flex flex-col md:flex-row justify-between items-center border-t border-gray-100 pt-8 gap-4">
+                <button onclick="goToStep(2)" class="px-8 py-4 bg-gray-400 text-white text-2xl font-bold rounded-xl hover:bg-gray-500 transition-all shadow-lg flex items-center w-full md:w-auto justify-center">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg> 返回自由探索
+                </button>
+                <button onclick="goToStep(4)" class="px-8 py-4 bg-green-600 text-white text-2xl font-bold rounded-xl hover:bg-green-700 transition-all shadow-lg transform hover:-translate-y-1 flex items-center w-full md:w-auto justify-center">
+                    进入下一步：规律总结 <svg class="w-6 h-6 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </button>
+            </div>
+        </section>
+
+        <!-- 第四部分：回顾与反思 (原第三步) -->
+        <section id="step-4" class="hidden bg-white rounded-2xl shadow-lg p-8 border-l-8 border-purple-400">
+            <div class="flex items-center justify-between mb-4">
+                <div class="bg-purple-100 text-purple-700 px-4 py-2 rounded-lg text-2xl font-bold flex items-center">
+                    <svg class="w-8 h-8 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                    第四步：回顾与反思
+                </div>
+                <button id="btn-reveal" onclick="toggleSummary()" class="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white text-xl font-bold rounded-xl shadow transition-all">
+                    展示图文总结
+                </button>
+            </div>
+
+            <div id="summary-content" class="hidden mt-8 p-8 bg-purple-50 rounded-xl border border-purple-200">
+                <div class="flex flex-col space-y-8">
+                    <!-- 核心结论前导 -->
+                    <div class="flex flex-col xl:flex-row justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <p class="text-3xl font-bold text-gray-900 tracking-wide">
+                            正方形的边长可以是多少？最小是多少？
+                        </p>
+                        <p class="text-3xl font-bold text-purple-700 mt-4 xl:mt-0 italic tracking-wide">
+                            解决关键：把拼砖问题，转化为求公倍数！
+                        </p>
+                    </div>
+
+                    <!-- 成功的拼法缩略图 -->
+                    <div class="flex flex-wrap justify-center items-end gap-x-12 gap-y-8 py-6" id="mini-maps-container">
+                        <!-- JS动态渲染 6dm 和 12dm 的成功拼法 -->
+                    </div>
+
+                    <!-- 底部总结文字 -->
+                    <div class="bg-white p-8 rounded-xl shadow-sm border-2 border-blue-100 text-center space-y-6">
+                        <p class="text-3xl font-bold text-gray-700 tracking-wider">
+                            只要找出 2 和 3 的公倍数和最小公倍数，就能知道所铺正方形的边长。
+                        </p>
+                        <p class="text-4xl font-bold text-blue-800 tracking-wider py-4">
+                            2 和 3 的公倍数有：<span class="text-red-600 mx-2">6</span>、<span class="text-red-600 mx-2">12</span>、<span class="text-red-600 mx-2">18</span> ...
+                        </p>
+                        <p class="text-4xl font-bold text-blue-800 tracking-wider">
+                            所以正方形的边长可以是 6dm、12dm... <span class="text-red-600 border-b-4 border-red-500 pb-1">最小是 6dm</span>。
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 第四步导航按钮区 -->
+            <div class="mt-12 flex flex-col md:flex-row justify-between items-center border-t border-gray-100 pt-8 gap-4">
+                <button onclick="goToStep(3)" class="px-8 py-4 bg-gray-400 text-white text-2xl font-bold rounded-xl hover:bg-gray-500 transition-all shadow-lg flex items-center w-full md:w-auto justify-center">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg> 返回目标验证
+                </button>
+                <button onclick="location.reload()" class="px-8 py-4 bg-purple-600 text-white text-2xl font-bold rounded-xl hover:bg-purple-700 transition-all shadow-lg flex items-center w-full md:w-auto justify-center">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> 重新开始演示
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // === 核心常数 ===
+        const UNIT = 45; // 放大比例：1dm = 45px，保证屏幕看得清
+        const TILE_W = 3; // 地砖长 3dm
+        const TILE_H = 2; // 地砖宽 2dm
+
+        // === 全局状态 ===
+        const totalSteps = 4;
+
+        // === 步骤切换控制 ===
+        function goToStep(stepNumber) {
+            // 隐藏所有
+            for(let i=1; i<=totalSteps; i++) {
+                let el = document.getElementById('step-' + i);
+                if(el) {
+                    el.classList.add('hidden');
+                    el.classList.remove('animate-fade');
+                }
+            }
+            // 显示目标
+            const targetStep = document.getElementById('step-' + stepNumber);
+            targetStep.classList.remove('hidden');
+            void targetStep.offsetWidth; // 触发重排
+            targetStep.classList.add('animate-fade');
+
+            document.getElementById('header-step-indicator').innerText = '当前：第 ' + stepNumber + ' 步 / 共 ' + totalSteps + ' 步';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // === 步骤一：揭示数学信息 ===
+        function revealMathInfo() {
+            const len = document.getElementById('info-length');
+            const wid = document.getElementById('info-width');
+            const sq = document.getElementById('info-square');
+            const intg = document.getElementById('info-integer');
+
+            len.className = "text-red-600 font-bold border-b-4 border-red-200 px-1 mx-1 bg-red-50 rounded transition-all duration-500";
+            wid.className = "text-blue-600 font-bold border-b-4 border-blue-200 px-1 mx-1 bg-blue-50 rounded transition-all duration-500";
+            sq.className = "font-bold text-green-600 border-b-4 border-green-200 px-1 mx-1 bg-green-50 rounded transition-all duration-500";
+            intg.className = "font-bold text-purple-600 border-b-4 border-purple-200 px-1 mx-1 bg-purple-50 rounded transition-all duration-500";
+
+            document.getElementById('reveal-btn-container').style.display = 'none';
+
+            const task = document.getElementById('thinking-task');
+            task.classList.remove('hidden');
+            void task.offsetWidth; 
+            task.classList.remove('opacity-0');
+            task.classList.add('opacity-100');
+        }
+
+        // ==========================================
+        // === 步骤二：自由手动拖拽探索逻辑 (新增) ===
+        // ==========================================
+        function addManualTile() {
+            const workspace = document.getElementById('manual-workspace');
+            const tile = document.createElement('div');
+            
+            // 样式设置
+            tile.className = "manual-tile absolute border-2 border-blue-600 flex flex-col items-center justify-center bg-[#93c5fd] shadow-md cursor-grab tile-pattern";
+            tile.style.width = (TILE_W * UNIT) + 'px';
+            tile.style.height = (TILE_H * UNIT) + 'px';
+            tile.innerHTML = `<span class="font-black text-2xl tracking-widest text-blue-900 opacity-80 mb-1 pointer-events-none">3dm</span><span class="font-black text-2xl text-blue-900 opacity-80 pointer-events-none">2dm</span>`;
+
+            // 计算一个阶梯状的初始位置，防止完全重叠
+            const existingTiles = document.querySelectorAll('.manual-tile').length;
+            let spawnX = (existingTiles * UNIT) % (810 - TILE_W * UNIT);
+            let spawnY = (existingTiles * UNIT) % (540 - TILE_H * UNIT);
+            
+            // 确保吸附到网格
+            spawnX = Math.round(spawnX / UNIT) * UNIT;
+            spawnY = Math.round(spawnY / UNIT) * UNIT;
+
+            tile.style.left = spawnX + 'px';
+            tile.style.top = spawnY + 'px';
+            tile.dataset.gridX = spawnX / UNIT;
+            tile.dataset.gridY = spawnY / UNIT;
+
+            makeDraggable(tile);
+            workspace.appendChild(tile);
+            
+            evaluateManualGrid();
+        }
+
+        function clearManualTiles() {
+            document.getElementById('manual-workspace').innerHTML = '';
+            evaluateManualGrid();
+        }
+
+        // 为地砖添加拖拽事件 (兼容鼠标和触摸)
+        function makeDraggable(el) {
+            let startX, startY, startLeft, startTop;
+
+            const moveHandler = (e) => {
+                let clientX = e.clientX || (e.touches && e.touches[0].clientX);
+                let clientY = e.clientY || (e.touches && e.touches[0].clientY);
+                let dx = clientX - startX;
+                let dy = clientY - startY;
+                el.style.left = (startLeft + dx) + 'px';
+                el.style.top = (startTop + dy) + 'px';
+                e.preventDefault(); // 阻止触摸滚动
+            };
+
+            const upHandler = (e) => {
+                document.removeEventListener('mousemove', moveHandler);
+                document.removeEventListener('mouseup', upHandler);
+                document.removeEventListener('touchmove', moveHandler);
+                document.removeEventListener('touchend', upHandler);
+
+                el.style.cursor = 'grab';
+                el.classList.remove('shadow-2xl', 'scale-105', 'z-50');
+
+                // === 吸附网格核心逻辑 ===
+                let currentLeft = parseInt(el.style.left || 0, 10);
+                let currentTop = parseInt(el.style.top || 0, 10);
+                
+                // 边界限制 (18dm x 12dm 容器)
+                let maxLeft = 810 - (TILE_W * UNIT);
+                let maxTop = 540 - (TILE_H * UNIT);
+                currentLeft = Math.max(0, Math.min(currentLeft, maxLeft));
+                currentTop = Math.max(0, Math.min(currentTop, maxTop));
+
+                // 自动吸附最近的格点
+                let snapLeft = Math.round(currentLeft / UNIT) * UNIT;
+                let snapTop = Math.round(currentTop / UNIT) * UNIT;
+
+                el.style.left = snapLeft + 'px';
+                el.style.top = snapTop + 'px';
+                el.dataset.gridX = snapLeft / UNIT;
+                el.dataset.gridY = snapTop / UNIT;
+
+                evaluateManualGrid();
+            };
+
+            const downHandler = (e) => {
+                if(e.type === 'touchstart') e.preventDefault();
+                
+                // 点击时将当前元素置顶
+                const allTiles = document.querySelectorAll('.manual-tile');
+                allTiles.forEach(t => t.classList.remove('z-50'));
+                el.classList.add('z-50'); 
+
+                let clientX = e.clientX || (e.touches && e.touches[0].clientX);
+                let clientY = e.clientY || (e.touches && e.touches[0].clientY);
+
+                startX = clientX;
+                startY = clientY;
+                startLeft = parseInt(el.style.left || 0, 10);
+                startTop = parseInt(el.style.top || 0, 10);
+
+                el.style.cursor = 'grabbing';
+                el.classList.add('shadow-2xl', 'scale-105'); // 提起效果
+
+                document.addEventListener('mousemove', moveHandler, {passive: false});
+                document.addEventListener('mouseup', upHandler);
+                document.addEventListener('touchmove', moveHandler, {passive: false});
+                document.addEventListener('touchend', upHandler);
+            };
+
+            el.addEventListener('mousedown', downHandler);
+            el.addEventListener('touchstart', downHandler, {passive: false});
+        }
+
+        // 智能评估学生拼摆的图形
+        function evaluateManualGrid() {
+            const tiles = Array.from(document.querySelectorAll('.manual-tile'));
+            const panel = document.getElementById('manual-status-panel');
+
+            // 统一基础样式，只改边框和背景色
+            const baseClass = "w-full max-w-[810px] min-h-[130px] border-4 rounded-xl p-6 flex items-center justify-center transition-all duration-300 ";
+
+            if (tiles.length === 0) {
+                panel.className = baseClass + "border-dashed border-gray-300 bg-gray-50";
+                panel.innerHTML = `
+                    <div class="flex items-center gap-6 w-full justify-center">
+                        <div class="text-5xl text-gray-300">👇</div>
+                        <div class="text-3xl text-gray-500 font-bold text-left">请点击上方“添加地砖”按钮，<br>并在下方画布中开始拼摆。</div>
+                    </div>`;
+                return;
+            }
+
+            let minX = Infinity, minY = Infinity;
+            let maxX = -Infinity, maxY = -Infinity;
+            let overlaps = false;
+            let gridMap = {};
+
+            // 扫描计算包围盒和碰撞
+            tiles.forEach(t => {
+                let gx = parseInt(t.dataset.gridX, 10);
+                let gy = parseInt(t.dataset.gridY, 10);
+                
+                minX = Math.min(minX, gx);
+                minY = Math.min(minY, gy);
+                maxX = Math.max(maxX, gx + TILE_W);
+                maxY = Math.max(maxY, gy + TILE_H);
+
+                // 简单的格子标记，用于检测重叠
+                for (let i = 0; i < TILE_W; i++) {
+                    for (let j = 0; j < TILE_H; j++) {
+                        let key = `${gx + i},${gy + j}`;
+                        if (gridMap[key]) overlaps = true;
+                        gridMap[key] = true;
+                    }
+                }
+            });
+
+            let w = maxX - minX;
+            let h = maxY - minY;
+            let expectedTiles = (w / TILE_W) * (h / TILE_H);
+            let hasHoles = tiles.length < expectedTiles;
+
+            if (overlaps) {
+                panel.className = baseClass + "border-red-400 bg-red-50 shadow-md";
+                panel.innerHTML = `
+                    <div class="flex items-center gap-6 w-full justify-center">
+                        <div class="text-6xl">⚠️</div>
+                        <div class="text-left">
+                            <h3 class="text-3xl font-black text-red-700 mb-2">地砖重叠了！</h3>
+                            <p class="text-2xl text-red-800">请拖动把它们平移开，铺地砖不能有重叠部分哦。</p>
+                        </div>
+                    </div>`;
+            } else if (hasHoles) {
+                panel.className = baseClass + "border-yellow-400 bg-yellow-50 shadow-sm";
+                panel.innerHTML = `
+                    <div class="flex items-center gap-6 w-full justify-center">
+                        <div class="text-6xl">🧩</div>
+                        <div class="text-left">
+                            <h3 class="text-3xl font-black text-yellow-700 mb-2">拼得不错，但中间或边缘还有空隙！</h3>
+                            <p class="text-2xl text-yellow-800">目前外轮廓：长 <strong class="text-3xl">${w}</strong> dm, 宽 <strong class="text-3xl">${h}</strong> dm，继续添加地砖吧。</p>
+                        </div>
+                    </div>`;
+            } else {
+                // 拼成了一个完整的矩形块
+                if (w === h) {
+                    panel.className = baseClass + "border-green-500 bg-green-100 shadow-xl transform scale-[1.02]";
+                    panel.innerHTML = `
+                        <div class="flex items-center gap-8 w-full justify-center">
+                            <div class="text-7xl">🎉</div>
+                            <div class="text-left">
+                                <h3 class="text-4xl font-black text-green-700 mb-2">太棒了！拼出正方形啦！边长是 <strong class="text-5xl text-red-600">${w}</strong> dm</h3>
+                                <p class="text-2xl text-green-800">提示：观察一下，${w} 是地砖的长(3)和宽(2)的倍数吗？</p>
+                            </div>
+                        </div>`;
+                } else {
+                    panel.className = baseClass + "border-blue-400 bg-blue-50 shadow-sm";
+                    panel.innerHTML = `
+                        <div class="flex items-center gap-6 w-full justify-center">
+                            <div class="text-6xl">👍</div>
+                            <div class="text-left">
+                                <h3 class="text-3xl font-black text-blue-700 mb-2">拼成了一个长方形</h3>
+                                <p class="text-2xl text-blue-800">长 <strong class="text-3xl">${w}</strong> dm，宽 <strong class="text-3xl">${h}</strong> dm。还没变成正方形哦！</p>
+                            </div>
+                        </div>`;
+                }
+            }
+        }
+
+        // ==========================================
+        // === 步骤三：目标动画验证 (原有的) ===
+        // ==========================================
+        function drawTiles(targetSize) {
+            const buttons = document.querySelectorAll('.btn-tile');
+            buttons.forEach((btn) => {
+                if(btn.innerText.includes(targetSize)) {
+                    btn.classList.add('bg-blue-500', 'text-white', 'border-blue-600');
+                    btn.classList.remove('bg-white', 'text-gray-700', 'border-gray-300');
+                } else {
+                    btn.classList.remove('bg-blue-500', 'text-white', 'border-blue-600');
+                    btn.classList.add('bg-white', 'text-gray-700', 'border-gray-300');
+                }
+            });
+
+            const container = document.getElementById('floor-container');
+            const placeholder = document.getElementById('placeholder-text');
+            if (placeholder) {
+                placeholder.style.display = 'none';
+            }
+            
+            container.style.width = (targetSize * UNIT) + 'px';
+            container.style.height = (targetSize * UNIT) + 'px';
+            container.classList.replace('border-dashed', 'border-solid');
+            container.classList.replace('border-gray-400', 'border-gray-800');
+            container.innerHTML = ''; 
+
+            document.getElementById('top-ruler-text').innerText = `目标边长 ${targetSize} dm`;
+            document.getElementById('left-ruler-text').innerText = `目标边长 ${targetSize} dm`;
+            document.getElementById('top-ruler').classList.remove('opacity-0');
+            document.getElementById('left-ruler').classList.remove('opacity-0');
+
+            let fitX = Math.floor(targetSize / TILE_W);
+            let fitY = Math.floor(targetSize / TILE_H);
+            let isPerfect = (targetSize % TILE_W === 0 && targetSize % TILE_H === 0);
+
+            let delay = 0;
+
+            for (let y = 0; y < fitY; y++) {
+                for (let x = 0; x < fitX; x++) {
+                    let tile = document.createElement('div');
+                    const isEven = (x + y) % 2 === 0;
+                    const bgColor = isEven ? 'bg-[#93c5fd]' : 'bg-[#bfdbfe]'; 
+                    
+                    tile.className = `absolute border border-blue-500 flex flex-col items-center justify-center text-blue-900 tile-enter shadow-sm tile-pattern ${bgColor}`;
+                    tile.style.left = (x * TILE_W * UNIT) + 'px';
+                    tile.style.top = (y * TILE_H * UNIT) + 'px';
+                    tile.style.width = (TILE_W * UNIT) + 'px';
+                    tile.style.height = (TILE_H * UNIT) + 'px';
+                    
+                    tile.innerHTML = `<span class="font-black text-xl tracking-widest text-blue-900 opacity-80 mb-1">3dm</span><span class="font-black text-xl text-blue-900 opacity-80">2dm</span>`;
+                    
+                    tile.style.animationDelay = delay + 's';
+                    container.appendChild(tile);
+                    delay += 0.03; 
+                }
+            }
+
+            const filledW = fitX * TILE_W;
+            const filledH = fitY * TILE_H;
+
+            if (targetSize > filledW) {
+                let rightGap = document.createElement('div');
+                rightGap.className = 'absolute bg-stripe-red border-2 border-red-500 border-dashed flex items-center justify-center text-red-700 font-bold tile-enter z-10';
+                rightGap.style.left = (filledW * UNIT) + 'px';
+                rightGap.style.top = '0px';
+                rightGap.style.width = ((targetSize - filledW) * UNIT) + 'px';
+                rightGap.style.height = (targetSize * UNIT) + 'px';
+                rightGap.style.animationDelay = delay + 's';
+                
+                let remainX = targetSize - filledW;
+                rightGap.innerHTML = `<span class="transform -rotate-90 text-2xl font-black tracking-widest whitespace-nowrap drop-shadow-sm">缺 ${remainX} dm</span>`;
+                container.appendChild(rightGap);
+                delay += 0.1;
+            }
+
+            if (targetSize > filledH) {
+                let bottomGap = document.createElement('div');
+                bottomGap.className = 'absolute bg-stripe-red border-2 border-red-500 border-dashed flex items-center justify-center text-red-700 font-bold tile-enter z-10';
+                bottomGap.style.left = '0px';
+                bottomGap.style.top = (filledH * UNIT) + 'px';
+                bottomGap.style.width = (filledW * UNIT) + 'px'; 
+                bottomGap.style.height = ((targetSize - filledH) * UNIT) + 'px';
+                bottomGap.style.animationDelay = delay + 's';
+                
+                let remainY = targetSize - filledH;
+                if (filledW > 0) {
+                    bottomGap.innerHTML = `<span class="text-2xl font-black tracking-widest drop-shadow-sm">缺 ${remainY} dm</span>`;
+                }
+                container.appendChild(bottomGap);
+            }
+
+            setTimeout(() => {
+                updateFeedback(targetSize, isPerfect);
+            }, (delay + 0.1) * 1000);
+        }
+
+        function updateFeedback(size, isPerfect) {
+            const panel = document.getElementById('feedback-panel');
+            
+            if (isPerfect) {
+                panel.className = "w-full lg:w-96 min-h-[300px] border-4 border-green-500 rounded-2xl p-8 flex flex-col justify-center items-center bg-green-50 shadow-lg transform transition-all";
+                panel.innerHTML = `
+                    <div class="text-7xl mb-4">✅</div>
+                    <h3 class="text-3xl font-black text-green-700 mb-4">完美拼成正方形！</h3>
+                    <p class="text-2xl text-green-800 leading-relaxed text-left w-full mt-4">
+                        当目标边长是 <span class="font-bold text-3xl mx-1 text-red-600">${size} dm</span> 时：<br><br>
+                        因为 ${size} 是长(3)的倍数，<br>
+                        ${size} 也是宽(2)的倍数。<br>
+                        即 ${size} 是 2 和 3 的<strong class="text-3xl">公倍数</strong>。
+                    </p>
+                `;
+            } else {
+                panel.className = "w-full lg:w-96 min-h-[300px] border-4 border-red-400 rounded-2xl p-8 flex flex-col justify-center items-center bg-red-50 shadow-lg transform transition-all";
+                
+                let reason = '';
+                if (size % 3 !== 0 && size % 2 !== 0) {
+                    reason = `${size} 既不是 3 的倍数，也不是 2 的倍数。`;
+                } else if (size % 3 !== 0) {
+                    reason = `${size} 是 2 的倍数，但 <span class="font-bold text-red-600 underline">不是 3 的倍数</span>（横向拼不齐）。`;
+                } else {
+                    reason = `${size} 是 3 的倍数，但 <span class="font-bold text-red-600 underline">不是 2 的倍数</span>（纵向拼不齐）。`;
+                }
+
+                panel.innerHTML = `
+                    <div class="text-7xl mb-4">❌</div>
+                    <h3 class="text-3xl font-black text-red-700 mb-4">拼不成正方形</h3>
+                    <p class="text-2xl text-red-800 leading-relaxed text-left w-full mt-4">
+                        当目标边长是 <span class="font-bold text-3xl mx-1">${size} dm</span> 时：<br><br>
+                        ${reason}<br>所以无法用整砖铺满。
+                    </p>
+                `;
+            }
+        }
+
+        // ==========================================
+        // === 步骤四：显示图文总结 ===
+        // ==========================================
+        function toggleSummary() {
+            const summary = document.getElementById('summary-content');
+            const btn = document.getElementById('btn-reveal');
+            
+            if (summary.classList.contains('hidden')) {
+                summary.classList.remove('hidden');
+                summary.classList.add('animate-[fadeIn_0.5s_ease-in-out]');
+                btn.innerText = "收起图文总结";
+                btn.classList.replace('bg-purple-600', 'bg-gray-500');
+                btn.classList.replace('hover:bg-purple-700', 'hover:bg-gray-600');
+                
+                if (document.getElementById('mini-maps-container').children.length === 0) {
+                    renderAllMiniMaps();
+                }
+            } else {
+                summary.classList.add('hidden');
+                btn.innerText = "展示图文总结";
+                btn.classList.replace('bg-gray-500', 'bg-purple-600');
+                btn.classList.replace('hover:bg-gray-600', 'hover:bg-purple-700');
+            }
+        }
+
+        function renderAllMiniMaps() {
+            const container = document.getElementById('mini-maps-container');
+            container.innerHTML = '';
+            const successfulSizes = [6, 12];
+            const UNIT_MINI = 15; // 缩略图比例：1dm = 15px
+
+            successfulSizes.forEach((size, index) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'flex flex-col items-center gap-6';
+
+                const mapDiv = document.createElement('div');
+                mapDiv.className = 'relative bg-white border-[3px] border-green-500 overflow-hidden shadow-md';
+                mapDiv.style.width = (size * UNIT_MINI) + 'px';
+                mapDiv.style.height = (size * UNIT_MINI) + 'px';
+
+                let fitX = size / TILE_W;
+                let fitY = size / TILE_H;
+
+                for (let y = 0; y < fitY; y++) {
+                    for (let x = 0; x < fitX; x++) {
+                        let tile = document.createElement('div');
+                        const isEven = (x + y) % 2 === 0;
+                        const bgColor = isEven ? 'bg-[#93c5fd]' : 'bg-[#bfdbfe]'; 
+                        
+                        tile.className = `absolute border border-blue-400 ${bgColor}`;
+                        tile.style.left = (x * TILE_W * UNIT_MINI) + 'px';
+                        tile.style.top = (y * TILE_H * UNIT_MINI) + 'px';
+                        tile.style.width = (TILE_W * UNIT_MINI) + 'px';
+                        tile.style.height = (TILE_H * UNIT_MINI) + 'px';
+                        mapDiv.appendChild(tile);
+                    }
+                }
+
+                const label = document.createElement('div');
+                label.className = 'text-3xl font-bold text-red-600 font-serif tracking-wider text-center';
+                label.innerHTML = `边长 ${size}dm<br><span class="text-xl text-gray-500 mt-2 block">(${fitX} × ${fitY} 块)</span>`;
+
+                wrapper.appendChild(mapDiv);
+                wrapper.appendChild(label);
+                container.appendChild(wrapper);
+
+                if(index === 0) {
+                    const comma = document.createElement('div');
+                    comma.className = 'text-5xl font-black text-gray-600 self-center mb-16';
+                    comma.innerText = '、';
+                    container.appendChild(comma);
+                } else if (index === successfulSizes.length - 1) {
+                    const ellipsis = document.createElement('div');
+                    ellipsis.className = 'text-5xl font-black text-gray-600 self-center mb-16 ml-4 tracking-widest';
+                    ellipsis.innerText = '......';
+                    container.appendChild(ellipsis);
+                }
+            });
+        }
+    </script>
+</body>
+</html>
