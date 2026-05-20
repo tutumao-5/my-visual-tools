@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>生态缸任务对象动态演示</title>
+<style>
+  :root{
+    --ink:#1e293b;
+    --muted:#64748b;
+    --blue:#2563eb;
+    --cyan:#06b6d4;
+    --orange:#f97316;
+    --green:#16a34a;
+    --purple:#7c3aed;
+    --sand:#d8a348;
+    --glass:#93c5fd;
+    --water:#38bdf8;
+    --red:#ef4444;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    height:100vh;
+    overflow:hidden;
+    font-family:"Microsoft YaHei","PingFang SC",Arial,sans-serif;
+    color:var(--ink);
+    background:linear-gradient(180deg,#f8fbff 0%,#eef7ff 100%);
+  }
+  .app{
+    height:100vh;
+    display:grid;
+    grid-template-rows:auto 1fr auto;
+    gap:14px;
+    padding:18px 160px 16px 24px;
+  }
+  .top{
+    display:block;
+  }
+  h1{
+    margin:0;
+    font-size:30px;
+    font-weight:900;
+    letter-spacing:.03em;
+  }
+  .sub{
+    margin-top:6px;
+    font-size:17px;
+    color:var(--muted);
+    font-weight:700;
+  }
+  .buttons{
+    position:fixed;
+    right:18px;
+    top:110px;
+    z-index:20;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    align-items:stretch;
+    width:122px;
+  }
+  .buttons button{
+    width:100%;
+    text-align:center;
+  }
+  button{
+    border:0;
+    border-radius:15px;
+    padding:12px 18px;
+    font-size:18px;
+    font-weight:900;
+    cursor:pointer;
+    color:#1e3a8a;
+    background:#dbeafe;
+    box-shadow:0 5px 16px rgba(37,99,235,.12);
+  }
+  button:hover{filter:brightness(.98);}
+  button.active{
+    color:white;
+    background:var(--blue);
+  }
+  button.reset{
+    background:#e2e8f0;
+    color:#334155;
+  }
+  .stage{
+    position:relative;
+    min-height:0;
+    background:rgba(255,255,255,.94);
+    border:1px solid #dbeafe;
+    border-radius:28px;
+    overflow:hidden;
+    box-shadow:0 12px 35px rgba(15,23,42,.08);
+  }
+
+  .calc-panel{
+    position:absolute;
+    right:34px;
+    top:46%;
+    transform:translateY(-50%);
+    width:360px;
+    min-height:210px;
+    padding:20px 22px;
+    background:rgba(255,255,255,.96);
+    border:2px solid #dbeafe;
+    border-radius:24px;
+    box-shadow:0 12px 30px rgba(15,23,42,.10);
+    z-index:4;
+    display:none;
+  }
+  .calc-panel.show{
+    display:block;
+    animation:panelPop .28s ease-out 1;
+  }
+  @keyframes panelPop{
+    0%{opacity:0; transform:translateY(-50%) scale(.96);}
+    100%{opacity:1; transform:translateY(-50%) scale(1);}
+  }
+  .calc-title{
+    font-size:26px;
+    font-weight:900;
+    color:#0f172a;
+    margin-bottom:14px;
+  }
+  .calc-line{
+    font-size:24px;
+    font-weight:900;
+    line-height:1.65;
+    color:#1e293b;
+  }
+  .calc-result{
+    margin-top:12px;
+    padding:10px 14px;
+    border-radius:16px;
+    background:#eff6ff;
+    color:#1d4ed8;
+    font-size:28px;
+    font-weight:900;
+    text-align:center;
+  }
+  svg{
+    width:100%;
+    height:100%;
+    display:block;
+    user-select:none;
+  }
+  #model{
+    filter:drop-shadow(0 16px 18px rgba(15,23,42,.12));
+  }
+  .glass-face{
+    fill:rgba(147,197,253,.22);
+    stroke:#2563eb;
+    stroke-width:3;
+    vector-effect:non-scaling-stroke;
+  }
+  .glass-side{
+    fill:rgba(147,197,253,.16);
+  }
+  .back-line{
+    stroke:#94a3b8;
+    stroke-dasharray:8 8;
+  }
+  .edge{
+    stroke:#334155;
+    stroke-width:4;
+    stroke-linecap:round;
+    fill:none;
+    vector-effect:non-scaling-stroke;
+  }
+  @keyframes edgeFlashOrange{
+    0%,100%{
+      stroke-width:9;
+      opacity:1;
+      filter:drop-shadow(0 0 2px rgba(249,115,22,.45));
+    }
+    50%{
+      stroke-width:14;
+      opacity:.55;
+      filter:drop-shadow(0 0 10px rgba(249,115,22,.9));
+    }
+  }
+  @keyframes edgeFlashPurple{
+    0%,100%{
+      stroke-width:8;
+      opacity:1;
+      filter:drop-shadow(0 0 2px rgba(124,58,237,.45));
+    }
+    50%{
+      stroke-width:13;
+      opacity:.55;
+      filter:drop-shadow(0 0 10px rgba(124,58,237,.9));
+    }
+  }
+  .edge-light{
+    stroke:var(--orange);
+    stroke-width:9;
+    stroke-linecap:round;
+    fill:none;
+    vector-effect:non-scaling-stroke;
+    animation:edgeFlashOrange .75s ease-in-out 1;
+  }
+  .edge-all{
+    stroke:var(--purple);
+    stroke-width:8;
+    stroke-linecap:round;
+    fill:none;
+    vector-effect:non-scaling-stroke;
+    animation:edgeFlashPurple .75s ease-in-out 1;
+  }
+  .sand{
+    fill:rgba(216,163,72,.62);
+    stroke:#b7791f;
+    stroke-width:2.5;
+    vector-effect:non-scaling-stroke;
+  }
+  .water{
+    fill:rgba(56,189,248,.46);
+    stroke:#0284c7;
+    stroke-width:2.5;
+    vector-effect:non-scaling-stroke;
+  }
+  .net-face{
+    fill:rgba(147,197,253,.28);
+    stroke:#2563eb;
+    stroke-width:3;
+    vector-effect:non-scaling-stroke;
+  }
+  .net-face.side{
+    fill:rgba(125,211,252,.22);
+  }
+  .net-face.bottom{
+    fill:rgba(191,219,254,.34);
+  }
+  .net-label{
+    font-size:21px;
+    font-weight:900;
+    fill:#1e3a8a;
+    pointer-events:none;
+  }
+  .dim{
+    font-size:21px;
+    font-weight:900;
+    fill:#334155;
+  }
+  .callout{
+    font-size:25px;
+    font-weight:900;
+    fill:#0f172a;
+  }
+  .small-text{
+    font-size:18px;
+    font-weight:800;
+    fill:#475569;
+  }
+  .formula{
+    font-size:24px;
+    font-weight:900;
+    fill:#0f172a;
+  }
+  .water-num{
+    font-size:34px;
+    font-weight:900;
+    fill:#0369a1;
+  }
+  .status{
+    min-height:64px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    background:#ffffff;
+    border:1px solid #dbeafe;
+    border-radius:22px;
+    box-shadow:0 6px 22px rgba(15,23,42,.06);
+    padding:10px 20px;
+    font-size:25px;
+    font-weight:900;
+  }
+  .badge{
+    display:inline-block;
+    margin-left:12px;
+    padding:4px 14px;
+    border-radius:999px;
+    background:#eff6ff;
+    color:#1d4ed8;
+    font-size:20px;
+  }
+  @media(max-width:980px){
+    .top{display:block;}
+    .buttons{
+      position:fixed;
+      right:10px;
+      top:96px;
+      width:104px;
+      gap:10px;
+    }
+    .calc-panel{right:18px; top:58%; width:300px;}
+    .app{padding:18px 126px 16px 14px;}
+    button{font-size:16px;padding:10px 13px;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div>
+      <h1>生态缸任务对象动态演示</h1>
+      <div class="sub">长 5dm，宽 3dm，高 4dm；上面不加盖。点击任务，观察研究对象。</div>
+    </div>
+    <div class="buttons">
+      <button id="btnBumper">防撞条</button>
+      <button id="btnAllEdges">所有棱</button>
+      <button id="btnGlass">玻璃</button>
+      <button id="btnSand">底砂</button>
+      <button id="btnWater">注水</button>
+      <button id="btnReset" class="reset">重置</button>
+    </div>
+  </div>
+
+  <section class="stage">
+    <div id="calcPanel" class="calc-panel">
+      <div class="calc-title" id="calcTitle">计算结果</div>
+      <div class="calc-line" id="calcLine1"></div>
+      <div class="calc-line" id="calcLine2"></div>
+      <div class="calc-result" id="calcResult"></div>
+    </div>
+    <svg id="svg" viewBox="0 0 1200 680" preserveAspectRatio="xMidYMid meet">
+      <g id="model"></g>
+      <g id="labels"></g>
+    </svg>
+  </section>
+
+  <div class="status" id="status">当前：观察无盖生态缸。上面不加盖，只保留上口边。</div>
+</div>
+
+<script>
+(() => {
+  const model = document.getElementById("model");
+  const labels = document.getElementById("labels");
+  const status = document.getElementById("status");
+  const calcPanel = document.getElementById("calcPanel");
+  const calcTitle = document.getElementById("calcTitle");
+  const calcLine1 = document.getElementById("calcLine1");
+  const calcLine2 = document.getElementById("calcLine2");
+  const calcResult = document.getElementById("calcResult");
+  const buttons = {
+    bumper:document.getElementById("btnBumper"),
+    all:document.getElementById("btnAllEdges"),
+    glass:document.getElementById("btnGlass"),
+    sand:document.getElementById("btnSand"),
+    water:document.getElementById("btnWater"),
+    reset:document.getElementById("btnReset")
+  };
+
+  const state = {
+    mode:"tank",
+    waterProgress:0,
+    anim:null
+  };
+
+  const box = {L:5, W:3, H:4, sandH:0.5};
+
+  function svgEl(tag, attrs={}, parent=model){
+    const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    Object.entries(attrs).forEach(([k,v]) => el.setAttribute(k,v));
+    parent.appendChild(el);
+    return el;
+  }
+
+  function line(p1,p2,cls="edge",parent=model){
+    return svgEl("line",{x1:p1.x,y1:p1.y,x2:p2.x,y2:p2.y,class:cls},parent);
+  }
+
+  function poly(points, cls, fill=null, parent=model){
+    const attrs = {points:points.map(p => `${p.x},${p.y}`).join(" "), class:cls};
+    if(fill) attrs.fill = fill;
+    return svgEl("polygon", attrs, parent);
+  }
+
+  function text(content,x,y,cls="small-text",anchor="middle",parent=labels){
+    const t = svgEl("text",{x,y,class:cls,"text-anchor":anchor},parent);
+    t.textContent = content;
+    return t;
+  }
+
+  function clear(){
+    model.innerHTML = "";
+    labels.innerHTML = "";
+  }
+
+  function showCalc(title, line1, line2, result){
+    calcTitle.textContent = title;
+    calcLine1.textContent = line1 || "";
+    calcLine2.textContent = line2 || "";
+    calcResult.textContent = result || "";
+    calcPanel.classList.add("show");
+  }
+
+  function hideCalc(){
+    calcPanel.classList.remove("show");
+  }
+
+  function setActive(mode){
+    Object.values(buttons).forEach(btn => btn.classList.remove("active"));
+    if(mode === "bumper") buttons.bumper.classList.add("active");
+    if(mode === "all") buttons.all.classList.add("active");
+    if(mode === "glass") buttons.glass.classList.add("active");
+    if(mode === "sand") buttons.sand.classList.add("active");
+    if(mode === "water") buttons.water.classList.add("active");
+  }
+
+  function project(){
+    const scale = 72;
+    const dx = 0.58;
+    const dy = -0.35;
+
+    function raw(x,y,z){
+      return {x:x*scale + z*scale*dx, y:-y*scale + z*scale*dy};
+    }
+
+    const rawPts = {
+      fbl:raw(0,0,0),
+      fbr:raw(box.L,0,0),
+      ftr:raw(box.L,box.H,0),
+      ftl:raw(0,box.H,0),
+      bbl:raw(0,0,box.W),
+      bbr:raw(box.L,0,box.W),
+      btr:raw(box.L,box.H,box.W),
+      btl:raw(0,box.H,box.W)
+    };
+
+    const xs = Object.values(rawPts).map(p => p.x);
+    const ys = Object.values(rawPts).map(p => p.y);
+    const cx = (Math.min(...xs) + Math.max(...xs))/2;
+    const cy = (Math.min(...ys) + Math.max(...ys))/2;
+
+    const pts = {};
+    Object.entries(rawPts).forEach(([k,p]) => {
+      pts[k] = {x:p.x + 530 - cx, y:p.y + 340 - cy};
+    });
+    return pts;
+  }
+
+  function pointAtY(pBottom, pTop, ratio){
+    return {
+      x:pBottom.x + (pTop.x - pBottom.x)*ratio,
+      y:pBottom.y + (pTop.y - pBottom.y)*ratio
+    };
+  }
+
+  function drawTank(options={}){
+    const p = project();
+
+    const faces = {
+      back:[p.bbl,p.bbr,p.btr,p.btl],
+      left:[p.fbl,p.ftl,p.btl,p.bbl],
+      bottom:[p.fbl,p.bbl,p.bbr,p.fbr],
+      right:[p.fbr,p.bbr,p.btr,p.ftr],
+      front:[p.fbl,p.fbr,p.ftr,p.ftl]
+    };
+
+    // 五个玻璃面：无顶盖
+    poly(faces.back,"glass-face glass-side back-line");
+    poly(faces.left,"glass-face glass-side back-line");
+    poly(faces.bottom,"glass-face");
+    poly(faces.right,"glass-face glass-side");
+    poly(faces.front,"glass-face");
+
+    // 底砂薄层
+    if(options.sand){
+      const r = box.sandH / box.H;
+      const sfl = pointAtY(p.fbl,p.ftl,r);
+      const sfr = pointAtY(p.fbr,p.ftr,r);
+      const sbl = pointAtY(p.bbl,p.btl,r);
+      const sbr = pointAtY(p.bbr,p.btr,r);
+      poly([p.fbl,p.fbr,sfr,sfl],"sand");
+      poly([p.fbr,p.bbr,sbr,sfr],"sand");
+      poly([p.fbl,p.bbl,sbl,sfl],"sand");
+      poly([sfl,sfr,sbr,sbl],"sand");
+      text("底砂 0.5dm", 530, 600, "callout");
+      text("看到的是底部一层长方体薄层", 530, 630, "small-text");
+    }
+
+    // 注水动态
+    if(options.water){
+      const r = Math.max(0.02, state.waterProgress);
+      const wfl = pointAtY(p.fbl,p.ftl,r);
+      const wfr = pointAtY(p.fbr,p.ftr,r);
+      const wbl = pointAtY(p.bbl,p.btl,r);
+      const wbr = pointAtY(p.bbr,p.btr,r);
+      poly([p.fbl,p.fbr,wfr,wfl],"water");
+      poly([p.fbr,p.bbr,wbr,wfr],"water");
+      poly([p.fbl,p.bbl,wbl,wfl],"water");
+      poly([wfl,wfr,wbr,wbl],"water");
+    }
+
+    const edges = {
+      frontBottom:[p.fbl,p.fbr], frontTop:[p.ftl,p.ftr], backBottom:[p.bbl,p.bbr], backTop:[p.btl,p.btr],
+      leftBottom:[p.fbl,p.bbl], leftTop:[p.ftl,p.btl], rightBottom:[p.fbr,p.bbr], rightTop:[p.ftr,p.btr],
+      verticalFL:[p.fbl,p.ftl], verticalFR:[p.fbr,p.ftr], verticalBL:[p.bbl,p.btl], verticalBR:[p.bbr,p.btr]
+    };
+
+    // 默认棱线
+    Object.values(edges).forEach(e => line(e[0],e[1],"edge"));
+
+    // 防撞条：上口4条 + 4条竖棱
+    if(options.bumper){
+      ["frontTop","backTop","leftTop","rightTop","verticalFL","verticalFR","verticalBL","verticalBR"].forEach(k => {
+        line(edges[k][0],edges[k][1],"edge-light");
+      });
+      text("防撞条", 530, 92, "callout");
+      text("上口4条棱 + 4条竖棱", 530, 126, "small-text");
+    }
+
+    // 所有棱
+    if(options.allEdges){
+      Object.values(edges).forEach(e => line(e[0],e[1],"edge-all"));
+      text("所有棱", 530, 92, "callout");
+      text("长方体共有12条棱", 530, 126, "small-text");
+    }
+
+    // 尺寸标注，保持简洁
+    text("长 5dm", (p.fbl.x+p.fbr.x)/2, p.fbl.y+42, "dim");
+    text("宽 3dm", (p.fbr.x+p.bbr.x)/2+58, (p.fbr.y+p.bbr.y)/2+18, "dim");
+    text("高 4dm", p.fbr.x+62, (p.fbr.y+p.ftr.y)/2, "dim");
+
+    return p;
+  }
+
+  function drawGlassNet(){
+    hideCalc();
+    clear();
+    const cx = 600, cy = 350;
+    const unit = 58;
+    const L = box.L*unit;
+    const W = box.W*unit;
+    const H = box.H*unit;
+
+    // 展开图：中间底面5×3，四周为四个侧面
+    const bottom = {x:cx-L/2,y:cy-W/2,w:L,h:W};
+    const front = {x:bottom.x,y:bottom.y+W,w:L,h:H};
+    const back = {x:bottom.x,y:bottom.y-H,w:L,h:H};
+    const left = {x:bottom.x-H,y:bottom.y,w:H,h:W};
+    const right = {x:bottom.x+L,y:bottom.y,w:H,h:W};
+
+    function rect(r,cls){
+      svgEl("rect",{x:r.x,y:r.y,width:r.w,height:r.h,class:cls});
+    }
+
+    rect(back,"net-face side");
+    rect(left,"net-face side");
+    rect(bottom,"net-face bottom");
+    rect(right,"net-face side");
+    rect(front,"net-face side");
+
+    text("后侧面 5×4", back.x+back.w/2, back.y+back.h/2+7, "net-label");
+    text("左侧面 3×4", left.x+left.w/2, left.y+left.h/2+7, "net-label");
+    text("底面 5×3", bottom.x+bottom.w/2, bottom.y+bottom.h/2+7, "net-label");
+    text("右侧面 3×4", right.x+right.w/2, right.y+right.h/2+7, "net-label");
+    text("前侧面 5×4", front.x+front.w/2, front.y+front.h/2+7, "net-label");
+
+    text("玻璃展开：无盖生态缸只需要5个面", 600, 78, "callout");
+    text("没有上面，不计算顶面", 600, 114, "small-text");
+    text("5×3 + 5×4×2 + 3×4×2 = 79 dm²", 600, 620, "formula");
+
+    status.innerHTML = '当前：玻璃展开。无盖生态缸只需要底面和4个侧面。<span class="badge">5个面</span>';
+  }
+
+  function drawWaterInfo(){
+    const h = box.H * state.waterProgress;
+    const volume = box.L * box.W * h;
+    const capacity = box.L * box.W * box.H;
+    text(`水深 ${h.toFixed(1)} dm`, 930, 205, "water-num", "middle");
+    text(`水的体积：5×3×${h.toFixed(1)} = ${volume.toFixed(1)} dm³`, 930, 248, "formula", "middle");
+    text(`${volume.toFixed(1)} dm³ = ${volume.toFixed(1)} L`, 930, 292, "formula", "middle");
+    text("1 dm³ = 1 L", 930, 344, "callout", "middle");
+    text(`装满时：${capacity} dm³ = ${capacity} L`, 930, 382, "small-text", "middle");
+  }
+
+  function render(){
+    clear();
+    if(state.mode === "glass"){
+      drawGlassNet();
+      return;
+    }
+    drawTank({
+      bumper:state.mode === "bumper",
+      allEdges:state.mode === "all",
+      sand:state.mode === "sand",
+      water:state.mode === "water"
+    });
+    if(state.mode === "water") drawWaterInfo();
+  }
+
+  function stopAnim(){
+    if(state.anim){
+      cancelAnimationFrame(state.anim);
+      state.anim = null;
+    }
+  }
+
+  function startWater(){
+    stopAnim();
+    hideCalc();
+    state.mode = "water";
+    state.waterProgress = 0;
+    setActive("water");
+    status.innerHTML = '当前：注水。内部空间逐渐填满，同步观察 dm³ 与 L 的换算。<span class="badge">1 dm³ = 1 L</span>';
+    const start = performance.now();
+    function step(now){
+      const t = Math.min(1, (now - start)/2200);
+      state.waterProgress = t;
+      render();
+      if(t < 1){
+        state.anim = requestAnimationFrame(step);
+      }else{
+        state.anim = null;
+      }
+    }
+    state.anim = requestAnimationFrame(step);
+  }
+
+  function choose(mode){
+    stopAnim();
+    state.mode = mode;
+    state.waterProgress = 0;
+    setActive(mode);
+    hideCalc();
+
+    if(mode === "bumper"){
+      status.innerHTML = '当前：防撞条。只高亮上口4条棱和4条竖棱。<span class="badge">部分棱长</span>';
+      showCalc("防撞条总长", "上口：5+3+5+3=16 dm", "四条竖棱：4×4=16 dm", "总长：32 dm");
+    }else if(mode === "all"){
+      status.innerHTML = '当前：所有棱。高亮长方体的12条棱。<span class="badge">棱长总和</span>';
+      showCalc("所有棱总长", "长、宽、高各有4条", "4×(5+3+4)=48 dm", "总长：48 dm");
+    }else if(mode === "glass"){
+      drawGlassNet();
+      return;
+    }else if(mode === "sand"){
+      status.innerHTML = '当前：底砂。底部出现0.5dm高的长方体薄层。<span class="badge">一层体积</span>';
+      showCalc("底砂体积", "底面积：5×3=15 dm²", "厚度：0.5 dm", "体积：15×0.5=7.5 dm³");
+    }else{
+      status.innerHTML = '当前：观察无盖生态缸。上面不加盖，只保留上口边。';
+    }
+    render();
+  }
+
+  buttons.bumper.addEventListener("click", () => choose("bumper"));
+  buttons.all.addEventListener("click", () => choose("all"));
+  buttons.glass.addEventListener("click", () => choose("glass"));
+  buttons.sand.addEventListener("click", () => choose("sand"));
+  buttons.water.addEventListener("click", startWater);
+  buttons.reset.addEventListener("click", () => {
+    stopAnim();
+    hideCalc();
+    state.mode = "tank";
+    state.waterProgress = 0;
+    setActive("");
+    status.innerHTML = '当前：观察无盖生态缸。上面不加盖，只保留上口边。';
+    render();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
