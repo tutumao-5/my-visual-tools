@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>科体艺社团总结会 - 随机抽答</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Lucide 图标库 -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%);
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 背景漂浮动画 */
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+        }
+
+        .floating-icon {
+            position: absolute;
+            opacity: 0.05;
+            z-index: 0;
+            animation: float 6s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        .card {
+            transition: all 0.3s ease;
+            backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.85);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 科技背景：电路点阵 */
+        .bg-pattern-science {
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(#3b82f6 1px, transparent 1px), radial-gradient(#3b82f6 1px, transparent 1px);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            opacity: 0.08;
+            z-index: 0;
+        }
+
+        /* 艺术背景：柔和光晕 */
+        .bg-pattern-art {
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(circle at 10% 10%, rgba(168, 85, 247, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(236, 72, 153, 0.15) 0%, transparent 40%);
+            z-index: 0;
+        }
+
+        /* 体育背景：动感斜纹 */
+        .bg-pattern-sports {
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(
+                -45deg,
+                rgba(249, 115, 22, 0.05),
+                rgba(249, 115, 22, 0.05) 10px,
+                transparent 10px,
+                transparent 20px
+            );
+            z-index: 0;
+        }
+
+        .card-content {
+            position: relative;
+            z-index: 10;
+        }
+
+        .name-display {
+            font-feature-settings: "tnum";
+            font-variant-numeric: tabular-nums;
+        }
+
+        .rolling {
+            filter: blur(2px);
+            opacity: 0.8;
+        }
+
+        .winner {
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            transform: scale(1.05);
+            filter: blur(0);
+            opacity: 1;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+            border-width: 0; /* 移除原来的边框，改用内阴影或发光效果 */
+            ring: 4px solid;
+        }
+        
+        /* 针对不同类别的选中高亮色 */
+        #card-science.winner { box-shadow: 0 0 0 4px #3b82f6, 0 20px 25px -5px rgba(59, 130, 246, 0.3); }
+        #card-art.winner { box-shadow: 0 0 0 4px #a855f7, 0 20px 25px -5px rgba(168, 85, 247, 0.3); }
+        #card-sports.winner { box-shadow: 0 0 0 4px #f97316, 0 20px 25px -5px rgba(249, 115, 22, 0.3); }
+
+        @keyframes popIn {
+            0% { transform: scale(0.95); opacity: 0.9; }
+            60% { transform: scale(1.08); }
+            100% { transform: scale(1.05); }
+        }
+
+        .btn-grad {
+            background-image: linear-gradient(to right, #2563eb 0%, #06b6d4 51%, #2563eb 100%);
+            transition: 0.5s;
+            background-size: 200% auto;
+        }
+        .btn-grad:hover {
+            background-position: right center;
+            transform: scale(1.05);
+        }
+        .btn-grad:active {
+            transform: scale(0.95);
+        }
+
+        .confetti {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            z-index: 50;
+            animation: fall linear forwards;
+        }
+
+        @keyframes fall {
+            to { transform: translateY(110vh) rotate(720deg); }
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center h-screen relative">
+
+    <!-- 背景装饰元素 -->
+    <i data-lucide="binary" class="floating-icon text-blue-800" style="top: 10%; left: 5%; width: 120px; height: 120px; animation-delay: 0s;"></i>
+    <i data-lucide="music-2" class="floating-icon text-purple-800" style="top: 15%; right: 8%; width: 100px; height: 100px; animation-delay: 1s;"></i>
+    <i data-lucide="dumbbell" class="floating-icon text-orange-800" style="bottom: 10%; left: 10%; width: 110px; height: 110px; animation-delay: 2s;"></i>
+    <i data-lucide="microscope" class="floating-icon text-blue-600" style="bottom: 20%; right: 15%; width: 90px; height: 90px; animation-delay: 3s;"></i>
+    <i data-lucide="palette" class="floating-icon text-pink-600" style="top: 40%; left: 15%; width: 80px; height: 80px; animation-delay: 1.5s;"></i>
+    <i data-lucide="trophy" class="floating-icon text-yellow-600" style="top: 50%; right: 5%; width: 80px; height: 80px; animation-delay: 0.5s;"></i>
+
+    <!-- 标题区域 -->
+    <header class="text-center mb-10 z-10 relative">
+        <h2 class="text-2xl text-slate-500 font-bold mb-2 tracking-[0.2em] uppercase">2025第二学期 · 科体艺社团总结会</h2>
+        <h1 class="text-5xl md:text-7xl font-black text-slate-800 tracking-tight drop-shadow-sm mb-4">
+            盲盒抽选：心声分享
+        </h1>
+        <div class="inline-flex items-center justify-center space-x-6 bg-white/60 backdrop-blur-sm px-8 py-3 rounded-full shadow-sm border border-white/50">
+            <span class="flex items-center gap-1 text-slate-600 font-bold"><i data-lucide="heart" class="w-4 h-4 text-red-500"></i> 1个暖心育人故事</span>
+            <span class="text-slate-300">|</span>
+            <span class="flex items-center gap-1 text-slate-600 font-bold"><i data-lucide="star" class="w-4 h-4 text-yellow-500"></i> 1个学期亮眼成果</span>
+        </div>
+    </header>
+
+    <!-- 抽奖卡片区域 -->
+    <main class="w-full max-w-7xl px-4 grid grid-cols-1 md:grid-cols-3 gap-8 z-10 mb-12">
+        
+        <!-- 科技组 -->
+        <div id="card-science" class="card border-t-8 border-blue-500 rounded-3xl shadow-lg p-0 flex flex-col h-72 group">
+            <div class="bg-pattern-science"></div>
+            <div class="card-content flex flex-col items-center justify-center h-full w-full p-8">
+                <div class="absolute top-4 right-4 text-blue-100 group-hover:text-blue-200 transition-colors duration-500">
+                    <i data-lucide="atom" size="80" stroke-width="1.5"></i>
+                </div>
+                <div class="w-full text-center">
+                    <div class="inline-flex items-center justify-center gap-2 bg-blue-100 text-blue-700 px-4 py-1.5 rounded-full text-sm font-bold tracking-wider mb-6">
+                        <i data-lucide="cpu" size="16"></i> 科技组
+                    </div>
+                    <div id="name-science" class="name-display text-5xl font-black text-slate-800 h-20 flex items-center justify-center tracking-wide">
+                        准备
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 艺术组 -->
+        <div id="card-art" class="card border-t-8 border-purple-500 rounded-3xl shadow-lg p-0 flex flex-col h-72 group">
+            <div class="bg-pattern-art"></div>
+            <div class="card-content flex flex-col items-center justify-center h-full w-full p-8">
+                <div class="absolute top-4 right-4 text-purple-100 group-hover:text-purple-200 transition-colors duration-500">
+                    <i data-lucide="palette" size="80" stroke-width="1.5"></i>
+                </div>
+                <div class="w-full text-center">
+                    <div class="inline-flex items-center justify-center gap-2 bg-purple-100 text-purple-700 px-4 py-1.5 rounded-full text-sm font-bold tracking-wider mb-6">
+                        <i data-lucide="music" size="16"></i> 艺术组
+                    </div>
+                    <div id="name-art" class="name-display text-5xl font-black text-slate-800 h-20 flex items-center justify-center tracking-wide">
+                        就绪
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 体育组 -->
+        <div id="card-sports" class="card border-t-8 border-orange-500 rounded-3xl shadow-lg p-0 flex flex-col h-72 group">
+            <div class="bg-pattern-sports"></div>
+            <div class="card-content flex flex-col items-center justify-center h-full w-full p-8">
+                <div class="absolute top-4 right-4 text-orange-100 group-hover:text-orange-200 transition-colors duration-500">
+                    <i data-lucide="trophy" size="80" stroke-width="1.5"></i>
+                </div>
+                <div class="w-full text-center">
+                    <div class="inline-flex items-center justify-center gap-2 bg-orange-100 text-orange-700 px-4 py-1.5 rounded-full text-sm font-bold tracking-wider mb-6">
+                        <i data-lucide="activity" size="16"></i> 体育组
+                    </div>
+                    <div id="name-sports" class="name-display text-5xl font-black text-slate-800 h-20 flex items-center justify-center tracking-wide">
+                        待命
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- 控制按钮 -->
+    <div class="z-20">
+        <button id="drawBtn" onclick="toggleDraw()" class="btn-grad text-white font-black py-5 px-16 rounded-full text-3xl shadow-2xl focus:outline-none ring-4 ring-blue-200/50 flex items-center gap-3">
+            <i data-lucide="play-circle" class="w-8 h-8"></i> 开始抽签
+        </button>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="absolute bottom-4 text-slate-400 text-sm font-medium z-10">
+        科体艺社团总结会专用
+    </footer>
+
+    <script>
+        // 初始化图标
+        lucide.createIcons();
+
+        // 名单数据
+        const data = {
+            science: [
+                "施杭婷", "蒋琪乐", "洪露晨", "王晓静", "罗琼", 
+                "蒋莉莉", "王益红", "林赛钗", "丁颖"
+            ],
+            art: [
+                "洪晨昕", "朱昕宇", "陈诗婕", "李雯", "王佳梦", "黄颖", 
+                "诸若宸", "沈沁", "谢雍容", "吴双", "吴洁"
+            ],
+            sports: [
+                "袁许涔", "姚海炳", "刘恩闻", "杨欣雨", "朱玉莲", "沈卓栋"
+            ]
+        };
+
+        let isRolling = false;
+        let intervals = {};
+        const DURATION = 2000; // 滚动时间 2秒
+
+        const els = {
+            science: document.getElementById('name-science'),
+            art: document.getElementById('name-art'),
+            sports: document.getElementById('name-sports'),
+            cards: {
+                science: document.getElementById('card-science'),
+                art: document.getElementById('card-art'),
+                sports: document.getElementById('card-sports')
+            },
+            btn: document.getElementById('drawBtn')
+        };
+
+        function toggleDraw() {
+            if (isRolling) return; // 如果正在滚动，点击无效
+
+            startRoll();
+        }
+
+        function startRoll() {
+            isRolling = true;
+            els.btn.innerHTML = '<i data-lucide="loader-2" class="w-8 h-8 animate-spin"></i> 抽签中...';
+            lucide.createIcons();
+            els.btn.classList.add('opacity-80', 'cursor-not-allowed');
+            
+            // 移除高亮样式，添加滚动样式
+            ['science', 'art', 'sports'].forEach(key => {
+                els.cards[key].classList.remove('winner');
+                els.names[key].classList.add('rolling');
+            });
+
+            // 启动定时器，快速切换名字
+            ['science', 'art', 'sports'].forEach(category => {
+                intervals[category] = setInterval(() => {
+                    const names = data[category];
+                    const randomName = names[Math.floor(Math.random() * names.length)];
+                    els.names[category].textContent = randomName;
+                }, 50); // 每50毫秒切换一次
+            });
+
+            // 设定时间后停止
+            setTimeout(stopRoll, DURATION);
+        }
+
+        function stopRoll() {
+            ['science', 'art', 'sports'].forEach(category => {
+                clearInterval(intervals[category]);
+                
+                // 最终抽取
+                const names = data[category];
+                const finalName = names[Math.floor(Math.random() * names.length)];
+                
+                els.names[category].textContent = finalName;
+                els.names[category].classList.remove('rolling');
+                els.cards[category].classList.add('winner');
+            });
+
+            createConfetti();
+
+            // 重置按钮
+            isRolling = false;
+            els.btn.innerHTML = '<i data-lucide="rotate-cw" class="w-8 h-8"></i> 再次抽签';
+            lucide.createIcons();
+            els.btn.classList.remove('opacity-80', 'cursor-not-allowed');
+        }
+
+        // 简易纸屑特效
+        function createConfetti() {
+            const colors = ['#3b82f6', '#a855f7', '#f97316', '#10b981', '#f43f5e', '#facc15'];
+            const shapes = ['circle', 'square', 'triangle'];
+            
+            for (let i = 0; i < 80; i++) {
+                const conf = document.createElement('div');
+                conf.classList.add('confetti');
+                
+                // 随机位置
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.top = -20 + 'px';
+                
+                // 随机颜色
+                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                
+                // 随机形状
+                const shape = Math.floor(Math.random() * 3);
+                if (shape === 1) conf.style.borderRadius = '50%'; // 圆形
+                
+                // 随机动画参数
+                const duration = Math.random() * 2 + 1.5;
+                conf.style.animationDuration = duration + 's';
+                conf.style.transform = `rotate(${Math.random() * 360}deg)`;
+                
+                document.body.appendChild(conf);
+
+                // 动画结束后移除
+                setTimeout(() => {
+                    conf.remove();
+                }, duration * 1000);
+            }
+        }
+
+        // 绑定元素引用方便调用
+        els.names = {
+            science: els.science,
+            art: els.art,
+            sports: els.sports
+        };
+
+    </script>
+</body>
+</html>
