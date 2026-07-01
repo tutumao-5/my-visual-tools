@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>社团故事分享会——盲盒抽选·心声分享</title>
+  <style>
+    :root{
+      --bg1:#081122;
+      --bg2:#0d1830;
+      --card:rgba(14,24,48,.78);
+      --border:rgba(255,255,255,.12);
+      --text:#eef4ff;
+      --muted:#b9c8e8;
+      --tech:#ffd84c;
+      --sport:#58b9ff;
+      --art:#73d36b;
+      --accent:#8f7cff;
+      --shadow:0 20px 60px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:"Microsoft YaHei","PingFang SC",sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 15% 20%, rgba(88,185,255,.18), transparent 24%),
+        radial-gradient(circle at 85% 18%, rgba(255,216,76,.14), transparent 26%),
+        radial-gradient(circle at 75% 78%, rgba(115,211,107,.13), transparent 28%),
+        linear-gradient(135deg,var(--bg1),var(--bg2));
+      overflow-x:hidden;
+    }
+
+    .grid-bg::before,
+    .grid-bg::after{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      z-index:0;
+    }
+    .grid-bg::before{
+      background-image:
+        linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);
+      background-size: 32px 32px;
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,.9), rgba(0,0,0,.25));
+    }
+    .grid-bg::after{
+      background:
+        radial-gradient(ellipse at center, rgba(143,124,255,.08), transparent 62%);
+      filter: blur(22px);
+    }
+
+    .wrap{
+      position:relative;
+      z-index:1;
+      max-width:1100px;
+      margin:0 auto;
+      padding:28px 20px 40px;
+    }
+
+    .hero{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:26px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      position:relative;
+    }
+    .hero::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        linear-gradient(90deg, rgba(255,216,76,.12), transparent 30%),
+        linear-gradient(180deg, transparent, rgba(88,185,255,.08));
+      pointer-events:none;
+    }
+    .hero-top{
+      padding:28px 30px 18px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    .tag-row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:14px;
+    }
+    .tag{
+      padding:6px 14px;
+      border-radius:999px;
+      font-size:14px;
+      font-weight:700;
+      letter-spacing:.5px;
+      color:#081122;
+    }
+    .tag.tech{background:var(--tech)}
+    .tag.sport{background:var(--sport)}
+    .tag.art{background:var(--art)}
+    h1{
+      margin:0;
+      font-size:38px;
+      line-height:1.25;
+      letter-spacing:1px;
+    }
+    .subtitle{
+      margin-top:10px;
+      color:var(--muted);
+      font-size:18px;
+      line-height:1.8;
+    }
+
+    .content{
+      display:grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap:22px;
+      padding:24px;
+    }
+
+    .panel{
+      background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:22px;
+      padding:22px;
+      backdrop-filter: blur(8px);
+      min-height:100%;
+    }
+
+    .panel h2{
+      margin:0 0 14px;
+      font-size:22px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .dot{
+      width:10px;height:10px;border-radius:50%;display:inline-block;
+      box-shadow:0 0 10px currentColor;
+    }
+    .dot.tech{color:var(--tech);background:var(--tech)}
+    .dot.sport{color:var(--sport);background:var(--sport)}
+    .dot.art{color:var(--art);background:var(--art)}
+
+    .desc{
+      color:#eef4ff;
+      font-size:20px;
+      line-height:1.95;
+      margin:0;
+    }
+    .desc strong{color:#fff}
+
+    .controls{
+      display:grid;
+      gap:16px;
+    }
+    .row{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+    }
+    .label{
+      font-size:16px;
+      color:var(--muted);
+      font-weight:700;
+      letter-spacing:.5px;
+    }
+    .num-box{
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+    input[type="number"]{
+      width:180px;
+      border:none;
+      outline:none;
+      padding:16px 18px;
+      border-radius:16px;
+      background:rgba(255,255,255,.08);
+      color:#fff;
+      font-size:28px;
+      font-weight:800;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+    }
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button{opacity:1}
+    .hint{font-size:13px;color:var(--muted)}
+
+    .checks{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .chip{
+      position:relative;
+    }
+    .chip input{display:none}
+    .chip label{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:12px 16px;
+      border-radius:14px;
+      cursor:pointer;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.05);
+      color:#fff;
+      font-weight:700;
+      transition:.22s ease;
+      user-select:none;
+    }
+    .chip input:checked + label{
+      transform:translateY(-2px);
+      box-shadow:0 10px 26px rgba(0,0,0,.2);
+    }
+    .chip.tech input:checked + label{background:rgba(255,216,76,.18); border-color:rgba(255,216,76,.45)}
+    .chip.sport input:checked + label{background:rgba(88,185,255,.16); border-color:rgba(88,185,255,.45)}
+    .chip.art input:checked + label{background:rgba(115,211,107,.16); border-color:rgba(115,211,107,.45)}
+
+    .actions{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top:4px;
+    }
+    button{
+      border:none;
+      cursor:pointer;
+      padding:15px 24px;
+      border-radius:16px;
+      font-size:18px;
+      font-weight:800;
+      transition:.22s ease;
+      color:#09111f;
+    }
+    .draw-btn{
+      background:linear-gradient(135deg, #ffd84c, #58b9ff, #73d36b);
+      box-shadow:0 14px 30px rgba(62,125,226,.28);
+      min-width:180px;
+    }
+    .draw-btn:hover{transform:translateY(-2px) scale(1.01)}
+    .reset-btn{
+      background:rgba(255,255,255,.1);
+      color:#fff;
+      border:1px solid rgba(255,255,255,.12);
+    }
+    .reset-btn:hover{transform:translateY(-2px)}
+
+    .result-zone{
+      margin-top:18px;
+      min-height:240px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border-radius:20px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border:1px dashed rgba(255,255,255,.14);
+      padding:18px;
+      position:relative;
+      overflow:hidden;
+    }
+    .result-placeholder{
+      color:var(--muted);
+      font-size:20px;
+      text-align:center;
+      line-height:1.8;
+    }
+    .rolling{
+      font-size:42px;
+      font-weight:900;
+      letter-spacing:2px;
+      color:#fff;
+      animation: pulse .6s infinite;
+      text-align:center;
+    }
+    @keyframes pulse{
+      0%,100%{transform:scale(1);opacity:.8}
+      50%{transform:scale(1.05);opacity:1}
+    }
+
+    .result-list{
+      width:100%;
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+      gap:14px;
+    }
+    .result-card{
+      border-radius:18px;
+      padding:16px 12px;
+      text-align:center;
+      font-size:26px;
+      font-weight:900;
+      color:#fff;
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow:0 12px 26px rgba(0,0,0,.18);
+      background:rgba(255,255,255,.08);
+      animation: popIn .45s ease both;
+      position:relative;
+      overflow:hidden;
+    }
+    .result-card::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:linear-gradient(135deg, rgba(255,255,255,.18), transparent 55%);
+      pointer-events:none;
+    }
+    .result-card small{
+      display:block;
+      margin-top:10px;
+      font-size:13px;
+      font-weight:700;
+      opacity:.9;
+      letter-spacing:1px;
+    }
+    .result-card.tech{background:linear-gradient(135deg, rgba(255,216,76,.26), rgba(255,216,76,.09));}
+    .result-card.sport{background:linear-gradient(135deg, rgba(88,185,255,.26), rgba(88,185,255,.08));}
+    .result-card.art{background:linear-gradient(135deg, rgba(115,211,107,.26), rgba(115,211,107,.08));}
+    @keyframes popIn{
+      from{opacity:0; transform:translateY(18px) scale(.92)}
+      to{opacity:1; transform:translateY(0) scale(1)}
+    }
+
+    .stats{
+      margin-top:10px;
+      color:var(--muted);
+      font-size:14px;
+      text-align:right;
+    }
+
+    #fireworks{
+      position:fixed;
+      inset:0;
+      width:100%;
+      height:100%;
+      pointer-events:none;
+      z-index:5;
+    }
+
+    @media (max-width: 900px){
+      .content{grid-template-columns:1fr;}
+      h1{font-size:30px}
+      .subtitle{font-size:16px}
+      .desc{font-size:18px}
+    }
+    @media (max-width: 600px){
+      .wrap{padding:14px 12px 24px}
+      .hero-top{padding:20px 18px 14px}
+      .content{padding:16px}
+      .panel{padding:18px}
+      h1{font-size:26px}
+      input[type="number"]{width:100%; font-size:24px}
+      .num-box{flex-direction:column; align-items:flex-start}
+      .result-card{font-size:22px}
+      .rolling{font-size:34px}
+    }
+  </style>
+</head>
+<body>
+  <canvas id="fireworks"></canvas>
+  <div class="grid-bg"></div>
+
+  <div class="wrap">
+    <section class="hero">
+      <div class="hero-top">
+        <div class="tag-row">
+          <span class="tag tech">科技</span>
+          <span class="tag sport">体育</span>
+          <span class="tag art">艺术</span>
+        </div>
+        <h1>环节三：社团故事分享会——盲盒抽选·心声分享</h1>
+        <div class="subtitle">现场抽选 · 公平随机 · 即时公布</div>
+      </div>
+
+      <div class="content">
+        <div class="panel">
+          <h2><span class="dot tech"></span><span class="dot sport"></span><span class="dot art"></span>活动内容</h2>
+          <p class="desc">
+            挖掘社团育人细节与师生成长故事。<br><br>
+            <strong>参与方式：</strong>现场随机盲盒抽选，教师参与分享。<br><br>
+            <strong>分享要求：</strong>围绕 <strong>1 个暖心育人故事 + 1 个学期亮眼成果</strong> 展开，
+            可搭配照片、短视频辅助讲述，展现社团日常、师生互动、学生成长及社团特色。
+          </p>
+        </div>
+
+        <div class="panel">
+          <h2><span class="dot tech"></span>盲盒抽选</h2>
+          <div class="controls">
+            <div class="row">
+              <div class="label">抽选人数</div>
+              <div class="num-box">
+                <input id="drawCount" type="number" min="1" value="4" />
+                <div class="hint">可自定义抽选人数</div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="label">抽选范围</div>
+              <div class="checks">
+                <div class="chip tech">
+                  <input id="tech" type="checkbox" checked />
+                  <label for="tech"><span class="dot tech"></span>科技</label>
+                </div>
+                <div class="chip sport">
+                  <input id="sport" type="checkbox" checked />
+                  <label for="sport"><span class="dot sport"></span>体育</label>
+                </div>
+                <div class="chip art">
+                  <input id="art" type="checkbox" checked />
+                  <label for="art"><span class="dot art"></span>艺术</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button class="draw-btn" id="drawBtn">开始抽选</button>
+              <button class="reset-btn" id="resetBtn">清空结果</button>
+            </div>
+          </div>
+
+          <div class="result-zone" id="resultZone">
+            <div class="result-placeholder">点击“开始抽选”<br>现场公布抽选结果</div>
+          </div>
+          <div class="stats" id="stats">当前可抽人数：30 人</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const pools = {
+      tech: ["蒋琪乐","洪露晨","蒋莉莉","施杭婷","刘宣航","王晓静","罗琼","王益红","林赛钗","丁颖"],
+      sport: ["俞海凤","姚海炳","刘恩闻","杨欣雨","李飞龙","沈卓栋","朱玉莲","蔡晓红","袁许涔"],
+      art: ["洪晨昕","朱昕宇","李雯","沈沁","陈诗婕","王佳梦","吴洁","诸若宸","黄颖","吴双","谢雍容"]
+    };
+
+    const categoryLabel = { tech: '科技', sport: '体育', art: '艺术' };
+    const drawBtn = document.getElementById('drawBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const drawCountInput = document.getElementById('drawCount');
+    const resultZone = document.getElementById('resultZone');
+    const stats = document.getElementById('stats');
+
+    function getSelectedKeys(){
+      return ['tech','sport','art'].filter(id => document.getElementById(id).checked);
+    }
+
+    function buildSelectedPool(){
+      const keys = getSelectedKeys();
+      const arr = [];
+      keys.forEach(key => {
+        pools[key].forEach(name => arr.push({name, category:key}));
+      });
+      return arr;
+    }
+
+    function updateStats(){
+      const pool = buildSelectedPool();
+      stats.textContent = `当前可抽人数：${pool.length} 人`;
+      drawCountInput.max = Math.max(1, pool.length);
+    }
+
+    document.querySelectorAll('input[type="checkbox"]').forEach(el => {
+      el.addEventListener('change', updateStats);
+    });
+    updateStats();
+
+    function shuffle(array){
+      const arr = [...array];
+      for(let i=arr.length-1;i>0;i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [arr[i],arr[j]] = [arr[j],arr[i]];
+      }
+      return arr;
+    }
+
+    function renderRolling(){
+      resultZone.innerHTML = `<div class="rolling">抽选中...</div>`;
+    }
+
+    function renderResults(list){
+      const html = list.map((item, index) =>
+        `<div class="result-card ${item.category}" style="animation-delay:${index*0.08}s">
+          ${item.name}
+          <small>${categoryLabel[item.category]}</small>
+        </div>`).join('');
+      resultZone.innerHTML = `<div class="result-list">${html}</div>`;
+    }
+
+    drawBtn.addEventListener('click', async () => {
+      const pool = buildSelectedPool();
+      if(pool.length === 0){
+        alert('请至少选择一个抽选范围。');
+        return;
+      }
+
+      let count = parseInt(drawCountInput.value,10);
+      if(isNaN(count) || count < 1) count = 1;
+      if(count > pool.length) count = pool.length;
+      drawCountInput.value = count;
+
+      drawBtn.disabled = true;
+      drawBtn.textContent = '抽选中...';
+      renderRolling();
+
+      await new Promise(r => setTimeout(r, 1800));
+
+      const result = shuffle(pool).slice(0, count);
+      renderResults(result);
+      launchFireworks();
+
+      drawBtn.disabled = false;
+      drawBtn.textContent = '开始抽选';
+    });
+
+    resetBtn.addEventListener('click', ()=>{
+      resultZone.innerHTML = `<div class="result-placeholder">点击“开始抽选”<br>现场公布抽选结果</div>`;
+    });
+
+    // Fireworks
+    const canvas = document.getElementById('fireworks');
+    const ctx = canvas.getContext('2d');
+    let W = canvas.width = window.innerWidth;
+    let H = canvas.height = window.innerHeight;
+    window.addEventListener('resize', ()=>{
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    });
+
+    const particles = [];
+    class Particle {
+      constructor(x,y,color,angle,speed,size){
+        this.x=x; this.y=y; this.color=color;
+        this.vx=Math.cos(angle)*speed;
+        this.vy=Math.sin(angle)*speed;
+        this.alpha=1;
+        this.decay=0.012 + Math.random()*0.012;
+        this.gravity=0.035 + Math.random()*0.02;
+        this.size=size;
+      }
+      update(){
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vy += this.gravity;
+        this.vx *= 0.99;
+        this.vy *= 0.99;
+        this.alpha -= this.decay;
+      }
+      draw(){
+        ctx.globalAlpha = Math.max(this.alpha,0);
+        ctx.beginPath();
+        ctx.arc(this.x,this.y,this.size,0,Math.PI*2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+      }
+    }
+
+    let animating = false;
+    function burst(x,y){
+      const palette = ['#ffd84c','#58b9ff','#73d36b','#ff7cff','#ffffff','#ff9f50'];
+      const count = 45 + Math.floor(Math.random()*20);
+      for(let i=0;i<count;i++){
+        const angle = (Math.PI*2/count)*i + Math.random()*0.4;
+        const speed = 2 + Math.random()*5;
+        const size = 1.8 + Math.random()*2.6;
+        const color = palette[Math.floor(Math.random()*palette.length)];
+        particles.push(new Particle(x,y,color,angle,speed,size));
+      }
+    }
+
+    function animate(){
+      if(!animating) return;
+      ctx.clearRect(0,0,W,H);
+      for(let i=particles.length-1;i>=0;i--){
+        particles[i].update();
+        particles[i].draw();
+        if(particles[i].alpha <= 0){
+          particles.splice(i,1);
+        }
+      }
+      ctx.globalAlpha = 1;
+      if(particles.length > 0){
+        requestAnimationFrame(animate);
+      }else{
+        animating = false;
+      }
+    }
+
+    function launchFireworks(){
+      const points = [
+        [W*0.22, H*0.28],
+        [W*0.5, H*0.22],
+        [W*0.78, H*0.30],
+        [W*0.36, H*0.40],
+        [W*0.64, H*0.42]
+      ];
+      points.forEach((p, i) => setTimeout(()=>burst(p[0], p[1]), i*220));
+      if(!animating){
+        animating = true;
+        animate();
+      }
+    }
+  </script>
+</body>
+</html>
