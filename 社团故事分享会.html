@@ -456,11 +456,6 @@
       return arr;
     }
 
-    function updateStats(){
-      const pool = buildSelectedPool();
-      stats.textContent = `当前可抽人数：${pool.length} 人`;
-      drawCountInput.max = Math.max(1, pool.length);
-    }
 
     document.querySelectorAll('input[type="checkbox"]').forEach(el => {
       el.addEventListener('change', updateStats);
