@@ -34,6 +34,7 @@
   #diagram text{font-family:"PingFang SC","Microsoft YaHei",sans-serif;fill:var(--ink);font-size:32px;font-weight:650}
   #diagram .dim{font-size:34px;fill:var(--teal);font-weight:750}#diagram .minor{font-size:25px;fill:var(--muted);font-weight:500}#diagram .piece-label{font-size:29px;fill:var(--muted);font-weight:650}
   #diagram .big-answer{font-size:43px;fill:var(--ink);font-weight:800}#diagram .answer-label{font-size:26px;fill:var(--muted)}
+  #diagram .reference-label{font-size:22px;fill:var(--muted);font-weight:600}#diagram .fold-number{font-size:19px;fill:var(--teal);font-weight:800}#diagram .model-caption{font-size:23px;fill:var(--muted)}
   .scene-foot{padding:0 27px 18px;display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:65px;flex-shrink:0}
   .observation{font-size:clamp(19px,1.65vw,29px);font-weight:600;line-height:1.45;margin:0;max-width:1000px}.observation .accent{color:var(--teal)}
   .trace-button{border:1.5px solid var(--teal);background:#fff;color:var(--teal);border-radius:13px;min-height:51px;padding:8px 18px;white-space:nowrap;font-size:clamp(16px,1.1vw,21px);font-weight:700}
@@ -41,7 +42,6 @@
   .dock{display:flex;align-items:center;justify-content:space-between;gap:18px}.navigation{display:flex;align-items:center;gap:12px}.control{border:1px solid var(--line);background:#fff;color:var(--ink);min-height:68px;border-radius:18px;padding:13px 24px;font-size:clamp(19px,1.6vw,29px);font-weight:750;display:flex;align-items:center;justify-content:center;gap:12px}
   .control.primary{background:var(--teal);color:#fff;border-color:var(--teal);min-width:240px}.control.primary:hover{background:#066b72}.control.secondary:hover{background:#f6fafb}
   .progress-label{font-size:16px;color:var(--muted);line-height:1.6}.progress-label strong{font-size:18px;color:var(--ink);font-weight:700}.keyboard-tip{font-size:13px;color:var(--muted)}
-  .cut-hint{position:absolute;top:7px;left:0;right:0;display:flex;justify-content:center;pointer-events:none;color:var(--orange);font-size:clamp(16px,1.3vw,22px);font-weight:650}.cut-hint[hidden]{display:none}
   .zoom-note{position:absolute;right:26px;bottom:8px;color:var(--muted);font-size:12px;pointer-events:none}.zoom-note[hidden]{display:none}
   .scissors-handle{cursor:grab;touch-action:none}.scissors-handle:active{cursor:grabbing}.scissors-body{stroke:var(--ink);stroke-width:5;fill:none;stroke-linecap:round;stroke-linejoin:round}
   .scissors-handle:focus-visible{outline:none}.scissors-handle:focus-visible .handle-focus{stroke:var(--orange);stroke-width:4;fill:var(--orange-pale)}
@@ -67,7 +67,6 @@
   <section class="lesson" aria-label="绳子对折与剪开演示">
     <div class="scene-top"><div class="scene-heading"><span class="scene-index" id="scene-index">01 / 07</span><h2 id="scene-title">先看这根绳子</h2></div><span class="fact" id="fact">总长 4 米</span></div>
     <div class="scene">
-      <div class="cut-hint" id="cut-hint" hidden>沿虚线向下拖动剪刀，或按下方“剪开绳子”</div>
       <svg id="diagram" viewBox="0 0 1280 500" role="img" aria-labelledby="diagram-title diagram-desc">
         <title id="diagram-title">一根长4米的绳子</title>
         <desc id="diagram-desc">点击下方按钮，依次观察两次对折、中点剪开、展开和比较。</desc>
@@ -79,7 +78,7 @@
           <g class="scissors-body"><circle cx="-18" cy="-22" r="13" fill="#fff0e8"/><circle cx="18" cy="-22" r="13" fill="#fff0e8"/><path d="M-10-12 22 45 0 24-22 45 10-12" fill="#e4edf0"/><circle cy="8" r="3" fill="#173d50"/></g>
         </g>
       </svg>
-      <span class="zoom-note" id="zoom-note" hidden>示意图：对折后放大显示，弯曲处不另计长度</span>
+      <span class="zoom-note" id="zoom-note" hidden>分层线段图 · 同号圆点表示同一个折点</span>
     </div>
     <div class="scene-foot"><p class="observation" id="observation" aria-live="polite">两个绳头之间，是完整的 4 米。</p><button id="trace" class="trace-button" aria-pressed="false" type="button" hidden>在原绳上看切口</button></div>
   </section>
@@ -96,16 +95,20 @@
   const NS = 'http://www.w3.org/2000/svg';
   const meta = [
     {tab:'看原绳',title:'先看这根绳子',fact:'总长 4 米',hint:'两个绳头之间，是完整的 4 米。',next:'对折一次',desc:'一根长4米的绳子，两个绳头都在原绳的两端。'},
-    {tab:'对折一次',title:'把两个绳头对齐',fact:'2 层 · 每层 2 米',hint:'绳头对齐，折弯处还连着。',next:'再对折一次',desc:'绳子第一次对折，两个绳头在左边对齐，右边是相连的折弯处，共2层，每层2米。'},
-    {tab:'再对折',title:'两层一起，再对折一次',fact:'4 层 · 每层 1 米',hint:'左边两个新折弯套在一起；右边两个绳头仍在一起。',next:'标出中点',desc:'两层一起从左向右再次对折。左边形成两个套在一起的新折弯，右上方保留第一次的折弯，两个绳头在右下方相邻，共4层，每层1米。'},
+    {tab:'对折一次',title:'把两个绳头对齐',fact:'2 层 · 每层 2 米',hint:'把重合的两层分开画。同号圆点是同一个折点，绳子在这里连着。',next:'再对折一次',desc:'用分层线段图表示第一次对折。两条完整线段各长2米，左侧是两个绳头，右侧两个1号圆点表示同一个折点。虚线帮助对应位置，不代表绳子。'},
+    {tab:'再对折',title:'两层一起，再对折一次',fact:'4 层 · 每层 1 米',hint:'每层从端点到端点，完整地长1米。①是原来的折点，②③是两个新折点。',next:'标出中点',desc:'两层一起从左向右对折，形成4条完整的1米线段。左侧同号的2号、3号圆点分别相接，右侧1号圆点相接，两个绳头在右下方。没有把折弯画成额外的绳长。'},
     {tab:'找中点',title:'找到折好后绳子的中点',fact:'1 米 = 10 分米',hint:'中点把每一层分成相等的两小段，每小段长 5 分米。',next:'剪开绳子',desc:'4层绳子中点对齐，每层长10分米，中点两侧各5分米。沿中点一刀剪开，将剪断4处。'},
-    {tab:'剪开',title:'一刀剪断叠在一起的 4 层',fact:'折弯处仍然连着',hint:'先别急着数！找一找：哪些小段还通过折弯处连在一起？',next:'展开看一看',desc:'中点4处都已剪断，左右分开，三个折弯处仍相连，两个原来的绳头成为各自独立的一小段。'},
-    {tab:'展开',title:'把每一段慢慢展开',fact:'一共得到 5 段',hint:'折弯处连着两小段；原来两个绳头处，各只有一小段。',next:'比较长短',desc:'展开后共5段，按原绳顺序排列：短、长、长、长、短。'},
+    {tab:'剪开',title:'一刀剪断叠在一起的 4 层',fact:'折点处仍然连着',hint:'同号折点仍相接。先找相连的小段，再数一共得到了几段绳子。',next:'展开看一看',desc:'4层中点都已剪断，左右分开。1号、2号、3号折点各连接两小段；两个原来的绳头处各有独立的一小段。'},
+    {tab:'展开',title:'把相连的小段拉直',fact:'先数一数，再比较',hint:'折点只是原来折过的位置。拉直后，两小段仍连成一整段。',next:'比较长短',desc:'把相同编号的折点合在一起并拉直。两个原来的绳头处各一小段，三个折点处各由两小段相连，按原绳顺序排好。'},
     {tab:'比长短',title:'现在，最长和最短各是多少？',fact:'3 段长绳 · 2 段短绳',hint:'短绳：5 分米。长绳：5 × 2 = 10（分米）= 1 米。',next:'再演示一次',desc:'5段绳子中，3段长绳每段1米，2段短绳每段5分米，也就是50厘米。总长仍是4米。'}
   ];
   const ranges = [[0,.5],[.5,1.5],[1.5,2.5],[2.5,3.5],[3.5,4]];
   const lengths = ranges.map(([a,b]) => b-a);
   const colors = ['#d96035','#087d85','#087d85','#087d85','#d96035'];
+  // 每条路径只画相邻半米标记之间的绳子，不跨过分层画开的折点。
+  // 因而层间的观察间距不会被画成一段额外的弯绳。
+  const units = Array.from({length:8},(_,i)=>({a:i/2,b:(i+1)/2,piece:ranges.findIndex(([a,b])=>i/2+.25>a&&i/2+.25<b)}));
+  const SCALE=260, CUT_START=155, CUT_END=420;
   const parts = [], texture = [];
   let step=0, trace=false, busy=false, animId=0, lastPoints=null, drag=null, toastTimer;
   let reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -125,68 +128,50 @@
     label('dimensions',(x1+x2)/2,y-15,text,'dim');
     if(sub)label('dimensions',(x1+x2)/2,y+40,sub,'minor');
   }
-  for(let i=0;i<5;i++){
-    parts.push(add('rope','path',{'stroke':'#d69b38','stroke-width':20,fill:'none','stroke-linecap':'round','stroke-linejoin':'round','data-piece':i+1}));
+  for(let i=0;i<units.length;i++){
+    parts.push(add('rope','path',{'stroke':'#d69b38','stroke-width':20,fill:'none','stroke-linecap':'round','stroke-linejoin':'round','data-unit':i+1,'data-piece':units[i].piece+1}));
     texture.push(add('rope','path',{'stroke':'#ffdc85','stroke-width':7,fill:'none','stroke-linecap':'round','stroke-dasharray':'2 10','pointer-events':'none'}));
   }
-  function folded(s,count) {
+  function folded(s,count,unit) {
     const rows=count===1?2:4;
-    const span=4/rows, left=count===1?250:330, right=count===1?1010:950;
-    const top=count===1?220:170, gap=count===1?66:58;
-    const eps=.046, radius=gap/2;
-    for(let k=1;k<rows;k++){
-      const bend=k*span;
-      if(Math.abs(s-bend)<=eps){
-        const t=(s-(bend-eps))/(2*eps), theta=-Math.PI/2+Math.PI*t;
-        if(count===1)return {x:right+radius*Math.cos(theta),y:top+radius+radius*Math.sin(theta)};
-        if(k===1)return {x:left-3*radius*Math.cos(theta),y:top+3*radius-3*radius*Math.sin(theta)};
-        if(k===2)return {x:right+radius*Math.cos(theta),y:top+radius+radius*Math.sin(theta)};
-        return {x:left-radius*Math.cos(theta),y:top+3*radius+radius*Math.sin(theta)};
-      }
-    }
-    const row=Math.min(rows-1,Math.floor(s/span));
-    const a=row===0?0:row*span+eps,b=row===rows-1?4:(row+1)*span-eps;
-    const middle=(row+.5)*span;
-    const t=s<=middle?.5*(s-a)/(middle-a):.5+.5*(s-middle)/(b-middle);
+    const span=4/rows, left=640-span*SCALE/2, right=640+span*SCALE/2;
+    const top=count===1?235:215, gap=count===1?80:58;
+    // 同一折点的两侧属于不同的观察层，以路径所在的半米区间决定行。
+    const row=Math.floor(unit/(8/rows)),t=(s-row*span)/span;
     const forward=count===1?row%2===0:row%2===1;
-    // 第二次是把两层一起翻折：从上到下为原绳的 B、C、D、A 四段。
-    // 因而 A-B 在左侧形成外弯，C-D 形成内弯，B-C 仍在右侧相连。
     const visualRow=count===1?row:[3,0,1,2][row];
     return {x:forward?left+(right-left)*t:right-(right-left)*t,y:top+visualRow*gap};
   }
-  function point(s,p,state,isTrace) {
+  function point(s,unit,state,isTrace) {
+    const p=units[unit].piece;
     if(state>=5 && !isTrace){
-      const a=ranges[p][0];return {x:260+(s-a)*485,y:99+p*72};
+      const a=ranges[p][0];return {x:360+(s-a)*SCALE,y:99+p*72};
     }
     if(state===0||isTrace){
-      const gap=isTrace?28:0;
-      return {x:(isTrace?90:120)+s*(isTrace?250:260)+p*gap,y:isTrace?240:265};
+      const gap=isTrace?20:0;
+      return {x:(isTrace?80:120)+s*SCALE+p*gap,y:isTrace?240:265};
     }
-    const pos=folded(s,state===1?1:2);
+    const pos=folded(s,state===1?1:2,unit);
     if(state===4){pos.x += p%2===1?-19:19;}
     return pos;
   }
   function targetPoints(state,isTrace){
-    return ranges.map(([a,b],p)=>Array.from({length:97},(_,i)=>point(a+(b-a)*i/96,p,state,isTrace)));
+    return units.map(({a,b},u)=>Array.from({length:33},(_,i)=>point(a+(b-a)*i/32,u,state,isTrace)));
   }
-  function secondFoldPoint(s,progress){
-    const source=folded(s,1),target=folded(s,2);
+  function foldPoint(s,unit,progress,second){
+    const source=second?folded(s,1,unit):point(s,unit,0,false);
+    const target=folded(s,second?2:1,unit);
     const angle=Math.PI*progress,cos=Math.cos(angle),sin=Math.sin(angle),h=(1-cos)/2;
-    const eps=.046,smooth=v=>{v=Math.max(0,Math.min(1,v));return v*v*(3-2*v)};
-    const moving=s<2?smooth((1+eps-s)/(2*eps)):smooth((s-3+eps)/(2*eps));
-    // 左半边的两层使用同一个翻折角度；仅在两个折弯附近平滑弯曲。
-    const dx=source.x-630,hinge=630-300*h,scaleX=1+(620/380-1)*h,scaleY=1+(58/66-1)*h;
-    const x=hinge+dx*(1-moving+moving*cos)*scaleX;
-    const fixedY=253+(source.y-253)*scaleY-54*h;
-    const movingY=253+(source.y-253)*cos*scaleY+62*h+Math.max(0,-dx)*sin*.34;
-    const y=fixedY*(1-moving)+movingY*moving;
-    // 将观察用的层间距逐渐展开，最后与正确的套叠折弯完全对齐。
-    const finalBaseX=330+dx*(1-2*moving)*(620/380);
-    const finalBaseY=(199+(source.y-253)*58/66)*(1-moving)+(315-(source.y-253)*58/66)*moving;
-    return {x:x+(target.x-finalBaseX)*h,y:y+(target.y-finalBaseY)*h};
+    const moving=second?(unit<2||unit>=6):unit>=4;
+    const hingeStart=640,hingeEnd=second?510:900;
+    const dx=source.x-hingeStart;
+    return {
+      x:hingeStart+(hingeEnd-hingeStart)*h+dx*(moving?cos:1),
+      y:source.y+(target.y-source.y)*h+(moving?Math.abs(dx)*sin*.26:0)
+    };
   }
-  function secondFoldPoints(progress){
-    return ranges.map(([a,b])=>Array.from({length:97},(_,i)=>secondFoldPoint(a+(b-a)*i/96,progress)));
+  function foldPoints(progress,second){
+    return units.map(({a,b},u)=>Array.from({length:33},(_,i)=>foldPoint(a+(b-a)*i/32,u,progress,second)));
   }
   function dPath(points){return points.map((p,i)=>(i?'L':'M')+p.x.toFixed(2)+' '+p.y.toFixed(2)).join(' ')}
   function paint(points){
@@ -195,33 +180,43 @@
   }
   function styleRope(){
     const cut=step>=4;
-    parts.forEach((p,i)=>{p.setAttribute('stroke',cut?colors[i]:'#d69b38');texture[i].setAttribute('stroke',cut?'#ffffff':'#ffdc85');texture[i].setAttribute('opacity',cut?'.28':'.95')});
+    parts.forEach((p,i)=>{p.setAttribute('stroke',cut?colors[units[i].piece]:'#d69b38');texture[i].setAttribute('stroke',cut?'#ffffff':'#ffdc85');texture[i].setAttribute('opacity',cut?'.28':'.95')});
   }
   function setBusy(value){busy=value;$('next').disabled=value;$('prev').disabled=value||step===0;}
-  function animate(target,isSecondFold=false){
+  function animate(target,fold=null,unfold=false){
     cancelAnimationFrame(animId);
     const from=lastPoints;
     if(!from||reduced.matches){paint(target);setBusy(false);decorate();return;}
     setBusy(true);
-    const start=performance.now(),duration=isSecondFold?2900:step===5?1400:950;
+    const start=performance.now(),duration=fold?2600:step===5?1700:950;
     let foldLine,foldLabel,movingEnds,foldNote;
-    if(isSecondFold){
-      foldLine=line('dimensions',630,125,630,380,'#087d85',3,'10 9');
-      foldLabel=label('dimensions',630,98,'对折线','minor');
-      foldNote=label('annotations',640,468,'两层一起向右折，让两端对齐','dim');
+    const joining=unfold?[[1,2,2],[3,4,1],[5,6,3]].map(([u,v,n])=>({u,v,n,dots:[foldDot(n),foldDot(n)],guide:add('dimensions','path',{fill:'none',stroke:'#9db5bf','stroke-width':2,'stroke-dasharray':'5 6'})})):[];
+    if(fold){
+      const x=640;
+      foldLine=line('dimensions',x,145,x,400,'#087d85',3,'10 9');
+      foldLabel=label('dimensions',x,125,'对折位置','minor');
+      foldNote=label('annotations',640,468,fold==='second'?'两层一起向右折':'把两个绳头对齐','dim');
       movingEnds=[0,4].map(()=>add('markers','circle',{r:12,fill:'#173d50',stroke:'#fff','stroke-width':4}));
     }
     function tick(now){
       const t=Math.min(1,(now-start)/duration),e=t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
-      if(isSecondFold){
+      if(fold){
         const phase=Math.max(0,Math.min(1,(t-.14)/.78)),progress=phase*phase*(3-2*phase);
-        paint(secondFoldPoints(progress));
-        const hinge=630-300*(1-Math.cos(Math.PI*progress))/2,opacity=Math.min(1,(1-t)/.1);
+        const second=fold==='second';paint(foldPoints(progress,second));
+        const h=(1-Math.cos(Math.PI*progress))/2,hinge=second?640-130*h:640+260*h,opacity=Math.min(1,(1-t)/.1);
         foldLine.setAttribute('x1',hinge);foldLine.setAttribute('x2',hinge);foldLine.setAttribute('opacity',opacity);
         foldLabel.setAttribute('x',hinge);foldLabel.setAttribute('opacity',opacity);foldNote.setAttribute('opacity',opacity);
-        [0,4].forEach((s,i)=>{const p=secondFoldPoint(s,progress);movingEnds[i].setAttribute('cx',p.x);movingEnds[i].setAttribute('cy',p.y)});
-      }else paint(target.map((pts,p)=>pts.map((v,i)=>({x:from[p][i].x+(v.x-from[p][i].x)*e,y:from[p][i].y+(v.y-from[p][i].y)*e}))));
-      if(t<1)animId=requestAnimationFrame(tick);else{setBusy(false);decorate();}
+        [0,4].forEach((s,i)=>{const p=foldPoint(s,i===0?0:7,progress,second);movingEnds[i].setAttribute('cx',p.x);movingEnds[i].setAttribute('cy',p.y)});
+      }else{
+        const current=target.map((pts,p)=>pts.map((v,i)=>({x:from[p][i].x+(v.x-from[p][i].x)*e,y:from[p][i].y+(v.y-from[p][i].y)*e})));
+        paint(current);
+        joining.forEach(({u,v,dots,guide})=>{
+          const a=current[u].at(-1),b=current[v][0];
+          [a,b].forEach((p,i)=>dots[i].setAttribute('transform','translate('+p.x+' '+p.y+')'));
+          guide.setAttribute('d','M'+a.x+' '+a.y+' L'+b.x+' '+b.y);
+        });
+      }
+      if(t<1)animId=requestAnimationFrame(tick);else{paint(target);setBusy(false);decorate();}
     }
     animId=requestAnimationFrame(tick);
   }
@@ -230,72 +225,107 @@
     label('annotations',x,y+(above?-27:50),text,'minor');
   }
   function cutMark(x,yTop=145,yBot=340){line('markers',x,yTop,x,yBot,'#d96035',3,'9 8')}
+  function foldDot(number,pos=null,group='markers'){
+    const g=add(group,'g',{'data-fold':number,...(pos?{transform:'translate('+pos.x+' '+pos.y+')'}:{})});
+    g.append(el('circle',{r:15,fill:'#fff',stroke:'#087d85','stroke-width':3}));
+    g.append(el('text',{y:6,'text-anchor':'middle',class:'fold-number'},String(number)));
+    return g;
+  }
+  function reference(count){
+    add('dimensions','rect',{x:98,y:15,width:1084,height:102,rx:15,fill:'#f4f8fa'});
+    label('dimensions',120,43,step>=3?'切口对应到原绳':'拉直看原绳','reference-label','start');
+    label('dimensions',1160,43,'总长 4 米','reference-label','end');
+    line('dimensions',120,83,1160,83,'#d69b38',9);
+    const spans=count===1?2:4;
+    for(let i=0;i<spans;i++)label('dimensions',120+(i+.5)*1040/spans,66,count===1?'2 米':'1 米','reference-label');
+    (count===1?[[2,1]]:[[1,2],[2,1],[3,3]]).forEach(([s,n])=>foldDot(n,{x:120+s*SCALE,y:83},'dimensions'));
+    if(step>=3)for(const s of [.5,1.5,2.5,3.5])line('dimensions',120+s*SCALE,73,120+s*SCALE,97,'#d96035',3);
+  }
+  function foldedConnections(state){
+    const pairs=state===1?[[2,3,4,1,950]]:[[1,1,2,2,440],[2,3,4,1,815],[3,5,6,3,475]];
+    pairs.forEach(([s,u,v,n,track])=>{
+      const a=point(s,u,state,false),b=point(s,v,state,false),offset=state===4?(units[u].piece%2===1?-19:19):0;
+      const x=track+offset;
+      // 细虚线是折点的对应关系；它不属于 #rope，也不参与长度计算。
+      add('dimensions','path',{d:'M'+a.x+' '+a.y+' H'+x+' V'+b.y+' H'+b.x,fill:'none',stroke:'#9db5bf','stroke-width':2,'stroke-dasharray':'5 7','data-connection':n});
+      foldDot(n,a);foldDot(n,b);
+    });
+  }
   function decorate(){
     ['dimensions','markers','annotations'].forEach(id=>$(id).replaceChildren());
     $('scissors').style.display='none';$('scissors').setAttribute('tabindex','-1');
     if(trace){
-      dimension(90,1202,112,'原绳总长仍是 4 米');
+      label('dimensions',640,112,'按原绳的顺序排好，空隙是剪开的地方','dim');
       for(let i=0;i<5;i++){
-        const [a,b]=ranges[i],x1=90+a*250+i*28,x2=90+b*250+i*28;
+        const [a,b]=ranges[i],x1=80+a*SCALE+i*20,x2=80+b*SCALE+i*20;
         label('annotations',(x1+x2)/2,201,String(i+1),'piece-label');
         if(step===6)label('annotations',(x1+x2)/2,302,i===0||i===4?'5 分米':'1 米','dim');
       }
       for(let i=0;i<4;i++){
-        const x=90+ranges[i][1]*250+i*28+14;
+        const x=80+ranges[i][1]*SCALE+i*20+10;
         cutMark(x,220,269);label('annotations',x,365,'切口 '+(i+1),'minor');
       }
-      label('annotations',640,438,'4 个切口，把一根绳子分成 5 段。','');
+      label('annotations',640,438,step===6?'5 + 10 + 10 + 10 + 5 = 40（分米）= 4 米':'4 个切口，把一根绳子分成 5 段。',step===6?'minor':'');
       return;
     }
     if(step===0){
       dimension(120,1160,174,'4 米');endpoint(120,265,'绳头');endpoint(1160,265,'绳头');
       label('annotations',640,386,'把两个绳头对齐，会发生什么？','minor');
     }else if(step===1){
-      dimension(250,1010,144,'每层 2 米');
-      endpoint(250,220,'',true);endpoint(250,286,'');
-      label('annotations',180,270,'绳头','minor');label('annotations',1110,265,'折弯处','');
-      line('annotations',1054,263,1091,263);
-      label('annotations',640,404,'4 ÷ 2 = 2（米）','dim');
+      reference(1);dimension(380,900,165,'每层 2 米');
+      endpoint(380,235,'');endpoint(380,315,'');foldedConnections(1);
+      label('annotations',230,284,'两个绳头','minor');
+      label('annotations',1060,284,'同一个折点①','minor');
+      label('annotations',640,215,'第 1 层','minor');label('annotations',640,295,'第 2 层','minor');
+      label('annotations',640,429,'4 ÷ 2 = 2（米）','dim');
+      label('annotations',640,478,'两层分开画，同号圆点表示同一个折点。','model-caption');
     }else if(step===2||step===3||step===4){
-      if(step!==3)dimension(330,950,102,'每层 1 米');
+      reference(2);foldedConnections(step);
+      const endA=point(0,0,step,false),endB=point(4,7,step,false);
+      endpoint(endA.x,endA.y,'');endpoint(endB.x,endB.y,'');
+      if(step===2)dimension(510,770,165,'每层 1 米');
       if(step===2){
-        endpoint(950,286,'');endpoint(950,344,'');
-        label('annotations',1090,211,'原来的折弯','');line('annotations',990,199,1030,199);
-        label('annotations',390,410,'两个新折弯','');
-        line('annotations',327,380,263,311);line('annotations',390,380,320,279);
-        label('annotations',1095,327,'两个绳头','');
-        line('annotations',990,286,1010,286);line('annotations',1010,286,1010,344);line('annotations',990,344,1010,344);
-        for(let r=0;r<4;r++)label('annotations',675,151+r*58,'第 '+(r+1)+' 层','minor');
-        label('annotations',640,452,'4 ÷ 2 ÷ 2 = 1（米）','dim');
+        label('annotations',980,252,'① 原来的折点','minor');
+        label('annotations',280,303,'②③ 新折点','minor');
+        label('annotations',965,370,'两个绳头','minor');
+        line('annotations',809,331,838,331);line('annotations',838,331,838,389);line('annotations',809,389,838,389);
+        for(let r=0;r<4;r++)label('annotations',640,195+r*58,'第 '+(r+1)+' 层','minor');
+        label('annotations',640,444,'4 ÷ 2 ÷ 2 = 1（米）','dim');
+        label('annotations',640,485,'同号圆点相接；虚线帮助认位置。','model-caption');
       }
       if(step===3){
-        dimension(330,640,102,'5 分米');dimension(640,950,102,'5 分米');
-        cutMark(640,146,370);
-        label('annotations',640,422,'中点','dim');
+        dimension(510,640,450,'5 分米');dimension(640,770,450,'5 分米');
+        cutMark(640,188,420);
+        label('annotations',640,488,'各层的中点对齐，一刀剪开。','model-caption');
+        label('annotations',980,290,'每层都分成两半','minor');
+        label('annotations',980,349,'向下拖动剪刀','minor');
+        label('annotations',980,388,'或按“剪开绳子”','minor');
         $('scissors').style.display='';$('scissors').setAttribute('tabindex','0');
-        $('scissors').setAttribute('transform','translate(640 125)');
+        $('scissors').setAttribute('transform','translate(640 '+CUT_START+')');
       }
       if(step===4){
-        cutMark(640,135,367);
+        label('dimensions',640,163,'剪口分开了，折点没有剪断。','dim');
+        cutMark(640,188,420);
         for(let row=0;row<4;row++){
-          add('markers','circle',{cx:621,cy:170+row*58,r:6,fill:'#d96035'});
-          add('markers','circle',{cx:659,cy:170+row*58,r:6,fill:'#d96035'});
+          add('markers','circle',{cx:621,cy:215+row*58,r:6,fill:'#d96035'});
+          add('markers','circle',{cx:659,cy:215+row*58,r:6,fill:'#d96035'});
         }
-        label('annotations',275,420,'折弯处连着的两小段','minor');
-        label('annotations',1000,425,'绳头处的一小段','minor');
-        line('annotations',1000,397,962,355,'#9eb6c1');
+        label('annotations',266,305,'同号折点仍相接','minor');
+        label('annotations',1005,360,'绳头处各一小段','minor');
+        label('annotations',640,473,'哪些小段还连在一起？按“展开看一看”。','model-caption');
       }
     }else{
       for(let p=0;p<5;p++){
         const y=99+p*72;
-        label('annotations',188,y+9,'第 '+(p+1)+' 段','piece-label');
-        if(step===6)label('annotations',p===0||p===4?550:808,y+10,p===0||p===4?'5 分米':'1 米','dim','start');
+        label('annotations',250,y+9,'第 '+(p+1)+' 段','piece-label');
+        if(step===6)label('annotations',p===0||p===4?550:690,y+10,p===0||p===4?'5 分米':'1 米','dim','start');
       }
-      line('dimensions',260,71,260,415,'#afc7d1',2,'6 7');
+      line('dimensions',360,71,360,415,'#afc7d1',2,'6 7');
       if(step===5){
-        label('annotations',989,164,'折弯处展开','');
-        label('annotations',989,211,'两小段连在一起','minor');
-        label('annotations',989,336,'一共几段？','');
+        [[1,1,2],[2,3,1],[3,5,3]].forEach(([s,u,n])=>foldDot(n,point(s,u,5,false)));
+        label('annotations',989,164,'把折点处拉直','');
+        label('annotations',989,211,'两小段连成一整段','minor');
+        label('annotations',989,336,'一共得到了几段？','');
       }else{
         add('annotations','rect',{x:960,y:80,width:250,height:145,rx:20,fill:'#e6f4f2'});
         label('annotations',1085,123,'最长','answer-label');label('annotations',1085,182,'1 米','big-answer');
@@ -324,7 +354,7 @@
     $('next-label').textContent=m.next;
     $('trace').hidden=step<5;$('trace').setAttribute('aria-pressed',String(trace));
     $('trace').textContent=trace?'回到展开图':'在原绳上看切口';
-    $('cut-hint').hidden=step!==3;$('zoom-note').hidden=step===0||trace||step>=5;
+    $('zoom-note').hidden=step===0||trace||step>=5;
     $('diagram-title').textContent=m.title;$('diagram-desc').textContent=trace?'原绳上4个切口将4米绳子分成5段，两端各5分米，中间三段各1米。':m.desc;
     document.querySelectorAll('.step').forEach((b,i)=>{
       b.classList.toggle('done',i<step);if(i===step)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current');
@@ -338,13 +368,14 @@
     drag=null;step=Math.max(0,Math.min(6,s));trace=false;
     cancelAnimationFrame(animId);setBusy(false);sync();
     ['dimensions','markers','annotations'].forEach(id=>$(id).replaceChildren());$('scissors').style.display='none';
-    if(instant){paint(targetPoints(step,false));decorate();}else animate(targetPoints(step,false),previous===1&&step===2);
+    if(instant){paint(targetPoints(step,false));decorate();}
+    else animate(targetPoints(step,false),previous===0&&step===1?'first':previous===1&&step===2?'second':null,previous===4&&step===5);
   }
   function next(){if(!busy)go(step===6?0:step+1)}
   function showToast(text){clearTimeout(toastTimer);$('toast').textContent=text;$('toast').hidden=false;toastTimer=setTimeout(()=>$('toast').hidden=true,3500)}
   $('next').addEventListener('click',next);
   $('prev').addEventListener('click',()=>{if(!busy&&step>0)go(step-1)});
-  $('reset').addEventListener('click',()=>go(0));
+  $('reset').addEventListener('click',()=>go(0,true));
   $('trace').addEventListener('click',()=>{
     if(busy)return;trace=!trace;sync();['dimensions','markers','annotations'].forEach(id=>$(id).replaceChildren());
     animate(targetPoints(step,trace));
@@ -362,26 +393,26 @@
     if((e.key===' '||e.key==='Enter')&&focusedButton)return;
     if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();next()}
     else if(e.key==='ArrowLeft'){e.preventDefault();if(!busy&&step>0)go(step-1)}
-    else if(e.key.toLowerCase()==='r')go(0);
+    else if(e.key.toLowerCase()==='r')go(0,true);
   });
   function svgPoint(e){const p=$('diagram').createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform($('diagram').getScreenCTM().inverse())}
   $('scissors').addEventListener('pointerdown',e=>{
     if(step!==3||busy)return;e.preventDefault();
-    drag={id:e.pointerId,offset:svgPoint(e).y-125,y:125};$('scissors').setPointerCapture(e.pointerId);
+    drag={id:e.pointerId,offset:svgPoint(e).y-CUT_START,y:CUT_START};$('scissors').setPointerCapture(e.pointerId);
   });
   $('scissors').addEventListener('pointermove',e=>{
     if(!drag||drag.id!==e.pointerId)return;
-    drag.y=Math.max(125,Math.min(365,svgPoint(e).y-drag.offset));
+    drag.y=Math.max(CUT_START,Math.min(CUT_END,svgPoint(e).y-drag.offset));
     $('scissors').setAttribute('transform','translate(640 '+drag.y+')');
   });
   function endDrag(e){
     if(!drag||drag.id!==e.pointerId)return;
-    const cut=drag.y>=315;drag=null;
+    const cut=drag.y>=CUT_END-15;drag=null;
     if($('scissors').hasPointerCapture(e.pointerId))$('scissors').releasePointerCapture(e.pointerId);
-    if(cut)go(4);else{$('scissors').setAttribute('transform','translate(640 125)');showToast('沿虚线拖到最下面，让剪刀经过全部 4 层。');}
+    if(cut)go(4);else{$('scissors').setAttribute('transform','translate(640 '+CUT_START+')');showToast('沿虚线拖到最下面，让剪刀经过全部 4 层。');}
   }
   $('scissors').addEventListener('pointerup',endDrag);
-  $('scissors').addEventListener('pointercancel',()=>{drag=null;if(step===3)$('scissors').setAttribute('transform','translate(640 125)')});
+  $('scissors').addEventListener('pointercancel',()=>{drag=null;if(step===3)$('scissors').setAttribute('transform','translate(640 '+CUT_START+')')});
   $('scissors').addEventListener('keydown',e=>{if(step===3&&(e.key==='Enter'||e.key===' ')){e.preventDefault();e.stopPropagation();next()}});
   go(0,true);
 })();
