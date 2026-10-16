@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>对折两次，一刀剪开 · 第4题互动演示</title>
+<style>
+  :root{--ink:#173d50;--muted:#58717d;--paper:#fff;--ground:#eaf2f5;--line:#d3e2e8;--teal:#087d85;--teal-pale:#e6f4f2;--orange:#d96035;--orange-pale:#fff0e8;--gold:#d69b38;--gold-light:#ffdc85;--radius:24px}
+  *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--ground);color:var(--ink)}
+  body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}
+  button{font:inherit;cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+  button:focus-visible,[tabindex]:focus-visible{outline:4px solid var(--orange);outline-offset:4px}
+  button:disabled{cursor:default;opacity:.36}button svg{width:25px;height:25px;flex:none}
+  .app{height:100vh;height:100dvh;min-height:640px;max-width:2300px;margin:auto;padding:20px 28px 18px;display:grid;grid-template-rows:auto auto auto minmax(0,1fr) auto;gap:13px}
+  .top{display:flex;align-items:center;justify-content:space-between;gap:20px}
+  .brand{display:flex;align-items:center;gap:15px}.brand-mark{display:grid;place-items:center;width:50px;height:50px;border-radius:50%;background:var(--ink);color:#fff;font-size:27px;font-weight:800}
+  .eyebrow{font-size:14px;letter-spacing:.13em;color:var(--muted);margin-bottom:3px}
+  h1{font-family:"Yuanti SC","STYuanti","Microsoft YaHei",sans-serif;font-size:clamp(25px,2.25vw,43px);line-height:1.2;margin:0;font-weight:800;letter-spacing:.02em}
+  .top-tools{display:flex;gap:10px}.small-button{border:1px solid var(--line);border-radius:15px;background:#fff;color:var(--ink);min-height:51px;padding:10px 17px;display:flex;align-items:center;justify-content:center;gap:9px;font-weight:650;font-size:17px}
+  .small-button:hover{background:var(--teal-pale)}
+  .question{border-left:5px solid var(--teal);padding:11px 18px;background:#f6fafb;border-radius:0 14px 14px 0;font-size:clamp(18px,1.7vw,29px);line-height:1.6}
+  .question strong{font-weight:800}.question .question-label{font-size:.75em;color:var(--teal);margin-right:14px;white-space:nowrap;vertical-align:2px}
+  .steps{display:flex;gap:8px;align-items:center;margin:0;padding:0;list-style:none}
+  .steps li{flex:1;min-width:0}.step{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;color:var(--muted);border:0;border-radius:13px;background:transparent;min-height:49px;padding:6px;font-size:clamp(15px,1.25vw,23px);white-space:nowrap}
+  .step .num{display:grid;place-items:center;border:1.5px solid #acc3ce;border-radius:50%;width:29px;height:29px;font-size:16px;flex:none}
+  .step[aria-current=step]{background:var(--ink);color:white;font-weight:750}.step[aria-current=step] .num{color:var(--ink);background:#fff;border-color:#fff}.step.done{color:var(--teal)}.step.done .num{border-color:var(--teal)}
+  .lesson{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);display:flex;flex-direction:column;min-height:0;overflow:hidden;position:relative}
+  .scene-top{padding:19px 27px 0;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0}
+  .scene-heading{display:flex;align-items:center;gap:14px}.scene-index{font-size:17px;letter-spacing:.1em;font-weight:700;color:var(--teal);padding-right:14px;border-right:1px solid var(--line)}
+  h2{margin:0;font-size:clamp(22px,1.9vw,34px);font-weight:750}.fact{font-size:clamp(17px,1.4vw,25px);background:var(--teal-pale);color:var(--teal);padding:8px 15px;border-radius:12px;font-weight:700;white-space:nowrap}
+  .scene{position:relative;flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+  #diagram{width:100%;height:100%;max-height:690px;min-height:235px;display:block;overflow:visible;touch-action:none;user-select:none;-webkit-user-select:none}
+  #diagram text{font-family:"PingFang SC","Microsoft YaHei",sans-serif;fill:var(--ink);font-size:32px;font-weight:650}
+  #diagram .dim{font-size:34px;fill:var(--teal);font-weight:750}#diagram .minor{font-size:25px;fill:var(--muted);font-weight:500}#diagram .piece-label{font-size:29px;fill:var(--muted);font-weight:650}
+  #diagram .big-answer{font-size:43px;fill:var(--ink);font-weight:800}#diagram .answer-label{font-size:26px;fill:var(--muted)}
+  .scene-foot{padding:0 27px 18px;display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:65px;flex-shrink:0}
+  .observation{font-size:clamp(19px,1.65vw,29px);font-weight:600;line-height:1.45;margin:0;max-width:1000px}.observation .accent{color:var(--teal)}
+  .trace-button{border:1.5px solid var(--teal);background:#fff;color:var(--teal);border-radius:13px;min-height:51px;padding:8px 18px;white-space:nowrap;font-size:clamp(16px,1.1vw,21px);font-weight:700}
+  .trace-button[hidden]{display:none}.trace-button[aria-pressed=true]{background:var(--teal-pale)}
+  .dock{display:flex;align-items:center;justify-content:space-between;gap:18px}.navigation{display:flex;align-items:center;gap:12px}.control{border:1px solid var(--line);background:#fff;color:var(--ink);min-height:68px;border-radius:18px;padding:13px 24px;font-size:clamp(19px,1.6vw,29px);font-weight:750;display:flex;align-items:center;justify-content:center;gap:12px}
+  .control.primary{background:var(--teal);color:#fff;border-color:var(--teal);min-width:240px}.control.primary:hover{background:#066b72}.control.secondary:hover{background:#f6fafb}
+  .progress-label{font-size:16px;color:var(--muted);line-height:1.6}.progress-label strong{font-size:18px;color:var(--ink);font-weight:700}.keyboard-tip{font-size:13px;color:var(--muted)}
+  .cut-hint{position:absolute;top:7px;left:0;right:0;display:flex;justify-content:center;pointer-events:none;color:var(--orange);font-size:clamp(16px,1.3vw,22px);font-weight:650}.cut-hint[hidden]{display:none}
+  .zoom-note{position:absolute;right:26px;bottom:8px;color:var(--muted);font-size:12px;pointer-events:none}.zoom-note[hidden]{display:none}
+  .scissors-handle{cursor:grab;touch-action:none}.scissors-handle:active{cursor:grabbing}.scissors-body{stroke:var(--ink);stroke-width:5;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .scissors-handle:focus-visible{outline:none}.scissors-handle:focus-visible .handle-focus{stroke:var(--orange);stroke-width:4;fill:var(--orange-pale)}
+  .toast{position:fixed;bottom:105px;left:50%;transform:translateX(-50%);padding:13px 22px;background:var(--ink);color:#fff;border-radius:13px;z-index:10;font-size:18px;max-width:90vw;text-align:center}.toast[hidden]{display:none}
+  @media(min-width:1700px){.app{padding:28px 40px 25px;gap:19px}.question{padding:14px 24px}.step{min-height:58px}.step .num{width:35px;height:35px;font-size:20px}.scene-top{padding:24px 32px 0}.scene-foot{padding:0 32px 24px}.control{min-height:82px;padding:15px 32px}.control.primary{min-width:290px}.small-button{min-height:59px;font-size:21px}.brand-mark{height:60px;width:60px;font-size:32px}.eyebrow{font-size:17px}.progress-label{font-size:19px}.keyboard-tip{font-size:16px}}
+  @media(max-height:760px) and (min-width:901px){.app{padding:12px 21px;gap:8px;min-height:590px}.question{padding:6px 15px;font-size:19px}.eyebrow{display:none}.brand-mark{width:43px;height:43px}.small-button{min-height:44px}.step{min-height:42px}.scene-top{padding:12px 22px 0}.scene-foot{padding:0 22px 12px;min-height:53px}.control{min-height:59px;padding:9px 22px}.keyboard-tip{display:none}#diagram{min-height:220px}}
+  @media(max-width:900px){.app{padding:14px;gap:10px;height:auto;min-height:100dvh;grid-template-rows:auto auto auto minmax(355px,1fr) auto}.top{gap:8px}.brand{gap:10px}.brand-mark{width:41px;height:41px;font-size:23px}.eyebrow{font-size:12px}h1{font-size:25px}.small-button{padding:8px 12px;min-height:46px;font-size:15px}.small-button svg{display:none}.question{font-size:19px;padding:9px 13px}.steps{gap:2px;overflow-x:auto}.step{font-size:14px;gap:5px;flex-direction:column;padding:6px 3px}.step .num{height:23px;width:23px;font-size:13px}.scene-top{padding:15px 17px 0}.scene-index{display:none}h2{font-size:22px}.fact{font-size:16px;padding:7px 10px}.scene-foot{padding:0 17px 15px;flex-wrap:wrap;gap:10px}.observation{font-size:19px}.trace-button{min-height:45px;font-size:16px}.dock{gap:10px;flex-wrap:wrap}.progress-label{display:none}.navigation{flex:1;gap:9px}.control{min-height:60px;padding:12px 17px;font-size:19px}.control.primary{min-width:0;flex:1}.control svg{width:21px}.zoom-note{right:16px;font-size:10px}.cut-hint{font-size:15px;top:9px}.lesson{min-height:355px}}
+  @media(max-width:540px){.top-tools{gap:6px}.top-tools .small-button{font-size:13px;padding:8px}.brand-mark{display:none}h1{font-size:21px}.eyebrow{font-size:10px}.question{font-size:17px}.question-label{display:none}.steps .step{font-size:12px}.scene-top{gap:6px}h2{font-size:19px}.fact{font-size:14px}.control{font-size:17px;padding:11px 12px}.control.primary{gap:5px}.control svg{width:18px}.observation{font-size:17px}.lesson{border-radius:19px}.cut-hint{font-size:12px}.app{grid-template-rows:auto auto auto minmax(345px,1fr) auto}.zoom-note{display:none!important}}
+  @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<main class="app">
+  <header class="top">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">4</span><div><div class="eyebrow">动手看数学 · 第4题</div><h1>对折两次，一刀剪开</h1></div></div>
+    <div class="top-tools">
+      <button id="reset" class="small-button" type="button" title="重新开始（R）"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 10a8 8 0 1 1 1 8M4 4v6h6"/></svg>重新开始</button>
+      <button id="fullscreen" class="small-button" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg><span id="fullscreen-label">全屏</span></button>
+    </div>
+  </header>
+  <div class="question"><span class="question-label">想一想</span>一根绳子长 <strong>4 米</strong>，<strong>对折 2 次</strong>后，<strong>从中间剪开</strong>。得到的绳子最长是多少？最短是多少？</div>
+  <ol class="steps" aria-label="演示步骤" id="steps"></ol>
+  <section class="lesson" aria-label="绳子对折与剪开演示">
+    <div class="scene-top"><div class="scene-heading"><span class="scene-index" id="scene-index">01 / 07</span><h2 id="scene-title">先看这根绳子</h2></div><span class="fact" id="fact">总长 4 米</span></div>
+    <div class="scene">
+      <div class="cut-hint" id="cut-hint" hidden>沿虚线向下拖动剪刀，或按下方“剪开绳子”</div>
+      <svg id="diagram" viewBox="0 0 1280 500" role="img" aria-labelledby="diagram-title diagram-desc">
+        <title id="diagram-title">一根长4米的绳子</title>
+        <desc id="diagram-desc">点击下方按钮，依次观察两次对折、中点剪开、展开和比较。</desc>
+        <defs><pattern id="dots" x="0" y="0" width="32" height="32" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#dce8ec"/></pattern></defs>
+        <rect x="35" y="40" width="1210" height="420" rx="20" fill="url(#dots)" opacity=".42"/>
+        <g id="dimensions"></g><g id="rope"></g><g id="markers"></g><g id="annotations"></g>
+        <g id="scissors" class="scissors-handle" role="button" tabindex="-1" aria-label="向下拖动剪刀，从中点剪开4层绳子" style="display:none">
+          <rect class="handle-focus" x="-45" y="-47" width="90" height="113" rx="22" fill="white" fill-opacity=".001" stroke="none"/>
+          <g class="scissors-body"><circle cx="-18" cy="-22" r="13" fill="#fff0e8"/><circle cx="18" cy="-22" r="13" fill="#fff0e8"/><path d="M-10-12 22 45 0 24-22 45 10-12" fill="#e4edf0"/><circle cy="8" r="3" fill="#173d50"/></g>
+        </g>
+      </svg>
+      <span class="zoom-note" id="zoom-note" hidden>示意图：对折后放大显示，弯曲处不另计长度</span>
+    </div>
+    <div class="scene-foot"><p class="observation" id="observation" aria-live="polite">两个绳头之间，是完整的 4 米。</p><button id="trace" class="trace-button" aria-pressed="false" type="button" hidden>在原绳上看切口</button></div>
+  </section>
+  <footer class="dock">
+    <div class="progress-label"><strong>先想一想，再动手</strong><br><span class="keyboard-tip">空格 / → 下一步　← 上一步　R 重新开始</span></div>
+    <div class="navigation"><button id="prev" class="control secondary" type="button" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg>上一步</button><button id="next" class="control primary" type="button"><span id="next-label">对折一次</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button></div>
+  </footer>
+</main>
+<div id="toast" class="toast" role="status" hidden></div>
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const NS = 'http://www.w3.org/2000/svg';
+  const meta = [
+    {tab:'看原绳',title:'先看这根绳子',fact:'总长 4 米',hint:'两个绳头之间，是完整的 4 米。',next:'对折一次',desc:'一根长4米的绳子，两个绳头都在原绳的两端。'},
+    {tab:'对折一次',title:'把两个绳头对齐',fact:'2 层 · 每层 2 米',hint:'绳头对齐，折弯处还连着。',next:'再对折一次',desc:'绳子第一次对折，两个绳头在左边对齐，右边是相连的折弯处，共2层，每层2米。'},
+    {tab:'再对折',title:'两层一起，再对折一次',fact:'4 层 · 每层 1 米',hint:'左边两个新折弯套在一起；右边两个绳头仍在一起。',next:'标出中点',desc:'两层一起从左向右再次对折。左边形成两个套在一起的新折弯，右上方保留第一次的折弯，两个绳头在右下方相邻，共4层，每层1米。'},
+    {tab:'找中点',title:'找到折好后绳子的中点',fact:'1 米 = 10 分米',hint:'中点把每一层分成相等的两小段，每小段长 5 分米。',next:'剪开绳子',desc:'4层绳子中点对齐，每层长10分米，中点两侧各5分米。沿中点一刀剪开，将剪断4处。'},
+    {tab:'剪开',title:'一刀剪断叠在一起的 4 层',fact:'折弯处仍然连着',hint:'先别急着数！找一找：哪些小段还通过折弯处连在一起？',next:'展开看一看',desc:'中点4处都已剪断，左右分开，三个折弯处仍相连，两个原来的绳头成为各自独立的一小段。'},
+    {tab:'展开',title:'把每一段慢慢展开',fact:'一共得到 5 段',hint:'折弯处连着两小段；原来两个绳头处，各只有一小段。',next:'比较长短',desc:'展开后共5段，按原绳顺序排列：短、长、长、长、短。'},
+    {tab:'比长短',title:'现在，最长和最短各是多少？',fact:'3 段长绳 · 2 段短绳',hint:'短绳：5 分米。长绳：5 × 2 = 10（分米）= 1 米。',next:'再演示一次',desc:'5段绳子中，3段长绳每段1米，2段短绳每段5分米，也就是50厘米。总长仍是4米。'}
+  ];
+  const ranges = [[0,.5],[.5,1.5],[1.5,2.5],[2.5,3.5],[3.5,4]];
+  const lengths = ranges.map(([a,b]) => b-a);
+  const colors = ['#d96035','#087d85','#087d85','#087d85','#d96035'];
+  const parts = [], texture = [];
+  let step=0, trace=false, busy=false, animId=0, lastPoints=null, drag=null, toastTimer;
+  let reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+  function el(tag, attrs={}, text='') {
+    const n=document.createElementNS(NS,tag);
+    Object.entries(attrs).forEach(([k,v])=>n.setAttribute(k,v));
+    if(text)n.textContent=text;
+    return n;
+  }
+  function add(group,tag,attrs,text){const n=el(tag,attrs,text);$(group).append(n);return n}
+  function label(group,x,y,text,cls='',anchor='middle') { return add(group,'text',{x,y,'text-anchor':anchor,class:cls},text); }
+  function line(group,x1,y1,x2,y2,color='#96b8c4',width=2,dash='') {
+    return add(group,'line',{x1,y1,x2,y2,stroke:color,'stroke-width':width,...(dash?{'stroke-dasharray':dash}:{})});
+  }
+  function dimension(x1,x2,y,text,sub='') {
+    line('dimensions',x1,y,x2,y);line('dimensions',x1,y-9,x1,y+9);line('dimensions',x2,y-9,x2,y+9);
+    label('dimensions',(x1+x2)/2,y-15,text,'dim');
+    if(sub)label('dimensions',(x1+x2)/2,y+40,sub,'minor');
+  }
+  for(let i=0;i<5;i++){
+    parts.push(add('rope','path',{'stroke':'#d69b38','stroke-width':20,fill:'none','stroke-linecap':'round','stroke-linejoin':'round','data-piece':i+1}));
+    texture.push(add('rope','path',{'stroke':'#ffdc85','stroke-width':7,fill:'none','stroke-linecap':'round','stroke-dasharray':'2 10','pointer-events':'none'}));
+  }
+  function folded(s,count) {
+    const rows=count===1?2:4;
+    const span=4/rows, left=count===1?250:330, right=count===1?1010:950;
+    const top=count===1?220:170, gap=count===1?66:58;
+    const eps=.046, radius=gap/2;
+    for(let k=1;k<rows;k++){
+      const bend=k*span;
+      if(Math.abs(s-bend)<=eps){
+        const t=(s-(bend-eps))/(2*eps), theta=-Math.PI/2+Math.PI*t;
+        if(count===1)return {x:right+radius*Math.cos(theta),y:top+radius+radius*Math.sin(theta)};
+        if(k===1)return {x:left-3*radius*Math.cos(theta),y:top+3*radius-3*radius*Math.sin(theta)};
+        if(k===2)return {x:right+radius*Math.cos(theta),y:top+radius+radius*Math.sin(theta)};
+        return {x:left-radius*Math.cos(theta),y:top+3*radius+radius*Math.sin(theta)};
+      }
+    }
+    const row=Math.min(rows-1,Math.floor(s/span));
+    const a=row===0?0:row*span+eps,b=row===rows-1?4:(row+1)*span-eps;
+    const middle=(row+.5)*span;
+    const t=s<=middle?.5*(s-a)/(middle-a):.5+.5*(s-middle)/(b-middle);
+    const forward=count===1?row%2===0:row%2===1;
+    // 第二次是把两层一起翻折：从上到下为原绳的 B、C、D、A 四段。
+    // 因而 A-B 在左侧形成外弯，C-D 形成内弯，B-C 仍在右侧相连。
+    const visualRow=count===1?row:[3,0,1,2][row];
+    return {x:forward?left+(right-left)*t:right-(right-left)*t,y:top+visualRow*gap};
+  }
+  function point(s,p,state,isTrace) {
+    if(state>=5 && !isTrace){
+      const a=ranges[p][0];return {x:260+(s-a)*485,y:99+p*72};
+    }
+    if(state===0||isTrace){
+      const gap=isTrace?28:0;
+      return {x:(isTrace?90:120)+s*(isTrace?250:260)+p*gap,y:isTrace?240:265};
+    }
+    const pos=folded(s,state===1?1:2);
+    if(state===4){pos.x += p%2===1?-19:19;}
+    return pos;
+  }
+  function targetPoints(state,isTrace){
+    return ranges.map(([a,b],p)=>Array.from({length:97},(_,i)=>point(a+(b-a)*i/96,p,state,isTrace)));
+  }
+  function secondFoldPoint(s,progress){
+    const source=folded(s,1),target=folded(s,2);
+    const angle=Math.PI*progress,cos=Math.cos(angle),sin=Math.sin(angle),h=(1-cos)/2;
+    const eps=.046,smooth=v=>{v=Math.max(0,Math.min(1,v));return v*v*(3-2*v)};
+    const moving=s<2?smooth((1+eps-s)/(2*eps)):smooth((s-3+eps)/(2*eps));
+    // 左半边的两层使用同一个翻折角度；仅在两个折弯附近平滑弯曲。
+    const dx=source.x-630,hinge=630-300*h,scaleX=1+(620/380-1)*h,scaleY=1+(58/66-1)*h;
+    const x=hinge+dx*(1-moving+moving*cos)*scaleX;
+    const fixedY=253+(source.y-253)*scaleY-54*h;
+    const movingY=253+(source.y-253)*cos*scaleY+62*h+Math.max(0,-dx)*sin*.34;
+    const y=fixedY*(1-moving)+movingY*moving;
+    // 将观察用的层间距逐渐展开，最后与正确的套叠折弯完全对齐。
+    const finalBaseX=330+dx*(1-2*moving)*(620/380);
+    const finalBaseY=(199+(source.y-253)*58/66)*(1-moving)+(315-(source.y-253)*58/66)*moving;
+    return {x:x+(target.x-finalBaseX)*h,y:y+(target.y-finalBaseY)*h};
+  }
+  function secondFoldPoints(progress){
+    return ranges.map(([a,b])=>Array.from({length:97},(_,i)=>secondFoldPoint(a+(b-a)*i/96,progress)));
+  }
+  function dPath(points){return points.map((p,i)=>(i?'L':'M')+p.x.toFixed(2)+' '+p.y.toFixed(2)).join(' ')}
+  function paint(points){
+    parts.forEach((p,i)=>{const d=dPath(points[i]);p.setAttribute('d',d);texture[i].setAttribute('d',d)});
+    lastPoints=points;
+  }
+  function styleRope(){
+    const cut=step>=4;
+    parts.forEach((p,i)=>{p.setAttribute('stroke',cut?colors[i]:'#d69b38');texture[i].setAttribute('stroke',cut?'#ffffff':'#ffdc85');texture[i].setAttribute('opacity',cut?'.28':'.95')});
+  }
+  function setBusy(value){busy=value;$('next').disabled=value;$('prev').disabled=value||step===0;}
+  function animate(target,isSecondFold=false){
+    cancelAnimationFrame(animId);
+    const from=lastPoints;
+    if(!from||reduced.matches){paint(target);setBusy(false);decorate();return;}
+    setBusy(true);
+    const start=performance.now(),duration=isSecondFold?2900:step===5?1400:950;
+    let foldLine,foldLabel,movingEnds,foldNote;
+    if(isSecondFold){
+      foldLine=line('dimensions',630,125,630,380,'#087d85',3,'10 9');
+      foldLabel=label('dimensions',630,98,'对折线','minor');
+      foldNote=label('annotations',640,468,'两层一起向右折，让两端对齐','dim');
+      movingEnds=[0,4].map(()=>add('markers','circle',{r:12,fill:'#173d50',stroke:'#fff','stroke-width':4}));
+    }
+    function tick(now){
+      const t=Math.min(1,(now-start)/duration),e=t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+      if(isSecondFold){
+        const phase=Math.max(0,Math.min(1,(t-.14)/.78)),progress=phase*phase*(3-2*phase);
+        paint(secondFoldPoints(progress));
+        const hinge=630-300*(1-Math.cos(Math.PI*progress))/2,opacity=Math.min(1,(1-t)/.1);
+        foldLine.setAttribute('x1',hinge);foldLine.setAttribute('x2',hinge);foldLine.setAttribute('opacity',opacity);
+        foldLabel.setAttribute('x',hinge);foldLabel.setAttribute('opacity',opacity);foldNote.setAttribute('opacity',opacity);
+        [0,4].forEach((s,i)=>{const p=secondFoldPoint(s,progress);movingEnds[i].setAttribute('cx',p.x);movingEnds[i].setAttribute('cy',p.y)});
+      }else paint(target.map((pts,p)=>pts.map((v,i)=>({x:from[p][i].x+(v.x-from[p][i].x)*e,y:from[p][i].y+(v.y-from[p][i].y)*e}))));
+      if(t<1)animId=requestAnimationFrame(tick);else{setBusy(false);decorate();}
+    }
+    animId=requestAnimationFrame(tick);
+  }
+  function endpoint(x,y,text,above=false){
+    add('markers','circle',{cx:x,cy:y,r:12,fill:'#173d50',stroke:'#fff','stroke-width':4});
+    label('annotations',x,y+(above?-27:50),text,'minor');
+  }
+  function cutMark(x,yTop=145,yBot=340){line('markers',x,yTop,x,yBot,'#d96035',3,'9 8')}
+  function decorate(){
+    ['dimensions','markers','annotations'].forEach(id=>$(id).replaceChildren());
+    $('scissors').style.display='none';$('scissors').setAttribute('tabindex','-1');
+    if(trace){
+      dimension(90,1202,112,'原绳总长仍是 4 米');
+      for(let i=0;i<5;i++){
+        const [a,b]=ranges[i],x1=90+a*250+i*28,x2=90+b*250+i*28;
+        label('annotations',(x1+x2)/2,201,String(i+1),'piece-label');
+        if(step===6)label('annotations',(x1+x2)/2,302,i===0||i===4?'5 分米':'1 米','dim');
+      }
+      for(let i=0;i<4;i++){
+        const x=90+ranges[i][1]*250+i*28+14;
+        cutMark(x,220,269);label('annotations',x,365,'切口 '+(i+1),'minor');
+      }
+      label('annotations',640,438,'4 个切口，把一根绳子分成 5 段。','');
+      return;
+    }
+    if(step===0){
+      dimension(120,1160,174,'4 米');endpoint(120,265,'绳头');endpoint(1160,265,'绳头');
+      label('annotations',640,386,'把两个绳头对齐，会发生什么？','minor');
+    }else if(step===1){
+      dimension(250,1010,144,'每层 2 米');
+      endpoint(250,220,'',true);endpoint(250,286,'');
+      label('annotations',180,270,'绳头','minor');label('annotations',1110,265,'折弯处','');
+      line('annotations',1054,263,1091,263);
+      label('annotations',640,404,'4 ÷ 2 = 2（米）','dim');
+    }else if(step===2||step===3||step===4){
+      if(step!==3)dimension(330,950,102,'每层 1 米');
+      if(step===2){
+        endpoint(950,286,'');endpoint(950,344,'');
+        label('annotations',1090,211,'原来的折弯','');line('annotations',990,199,1030,199);
+        label('annotations',390,410,'两个新折弯','');
+        line('annotations',327,380,263,311);line('annotations',390,380,320,279);
+        label('annotations',1095,327,'两个绳头','');
+        line('annotations',990,286,1010,286);line('annotations',1010,286,1010,344);line('annotations',990,344,1010,344);
+        for(let r=0;r<4;r++)label('annotations',675,151+r*58,'第 '+(r+1)+' 层','minor');
+        label('annotations',640,452,'4 ÷ 2 ÷ 2 = 1（米）','dim');
+      }
+      if(step===3){
+        dimension(330,640,102,'5 分米');dimension(640,950,102,'5 分米');
+        cutMark(640,146,370);
+        label('annotations',640,422,'中点','dim');
+        $('scissors').style.display='';$('scissors').setAttribute('tabindex','0');
+        $('scissors').setAttribute('transform','translate(640 125)');
+      }
+      if(step===4){
+        cutMark(640,135,367);
+        for(let row=0;row<4;row++){
+          add('markers','circle',{cx:621,cy:170+row*58,r:6,fill:'#d96035'});
+          add('markers','circle',{cx:659,cy:170+row*58,r:6,fill:'#d96035'});
+        }
+        label('annotations',275,420,'折弯处连着的两小段','minor');
+        label('annotations',1000,425,'绳头处的一小段','minor');
+        line('annotations',1000,397,962,355,'#9eb6c1');
+      }
+    }else{
+      for(let p=0;p<5;p++){
+        const y=99+p*72;
+        label('annotations',188,y+9,'第 '+(p+1)+' 段','piece-label');
+        if(step===6)label('annotations',p===0||p===4?550:808,y+10,p===0||p===4?'5 分米':'1 米','dim','start');
+      }
+      line('dimensions',260,71,260,415,'#afc7d1',2,'6 7');
+      if(step===5){
+        label('annotations',989,164,'折弯处展开','');
+        label('annotations',989,211,'两小段连在一起','minor');
+        label('annotations',989,336,'一共几段？','');
+      }else{
+        add('annotations','rect',{x:960,y:80,width:250,height:145,rx:20,fill:'#e6f4f2'});
+        label('annotations',1085,123,'最长','answer-label');label('annotations',1085,182,'1 米','big-answer');
+        add('annotations','rect',{x:960,y:247,width:250,height:171,rx:20,fill:'#fff0e8'});
+        label('annotations',1085,290,'最短','answer-label');label('annotations',1085,346,'5 分米','big-answer');
+        label('annotations',1085,390,'也就是 50 厘米','minor');
+        label('annotations',515,466,'核对总长：1 米 × 3 + 5 分米 × 2 = 4 米','minor');
+      }
+    }
+  }
+  meta.forEach((m,i)=>{
+    const li=document.createElement('li'),b=document.createElement('button');b.type='button';b.className='step';b.dataset.step=String(i);
+    b.innerHTML='<span class="num">'+(i+1)+'</span><span>'+m.tab+'</span>';
+    b.addEventListener('click',()=>{
+      if(busy)return;
+      if(i>step){showToast('先完成眼前这一步，再继续观察。');return;}
+      go(i);
+    });li.append(b);$('steps').append(li);
+  });
+  function sync(){
+    const m=meta[step];
+    $('scene-title').textContent=trace?'回到原绳，追踪每一个切口':m.title;
+    $('scene-index').textContent=String(step+1).padStart(2,'0')+' / 07';
+    $('fact').textContent=trace?'4 个切口 · 5 段绳子':m.fact;
+    $('observation').textContent=trace?(step===6?'两端各 5 分米，中间三段各 1 米。':'沿着原绳看：剪断了 4 处，得到了 5 段。'):m.hint;
+    $('next-label').textContent=m.next;
+    $('trace').hidden=step<5;$('trace').setAttribute('aria-pressed',String(trace));
+    $('trace').textContent=trace?'回到展开图':'在原绳上看切口';
+    $('cut-hint').hidden=step!==3;$('zoom-note').hidden=step===0||trace||step>=5;
+    $('diagram-title').textContent=m.title;$('diagram-desc').textContent=trace?'原绳上4个切口将4米绳子分成5段，两端各5分米，中间三段各1米。':m.desc;
+    document.querySelectorAll('.step').forEach((b,i)=>{
+      b.classList.toggle('done',i<step);if(i===step)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current');
+      b.disabled=busy||i>step;b.setAttribute('aria-label','第'+(i+1)+'步，'+meta[i].tab);
+    });
+    $('prev').disabled=busy||step===0;
+    styleRope();
+  }
+  function go(s,instant=false){
+    const previous=step;
+    drag=null;step=Math.max(0,Math.min(6,s));trace=false;
+    cancelAnimationFrame(animId);setBusy(false);sync();
+    ['dimensions','markers','annotations'].forEach(id=>$(id).replaceChildren());$('scissors').style.display='none';
+    if(instant){paint(targetPoints(step,false));decorate();}else animate(targetPoints(step,false),previous===1&&step===2);
+  }
+  function next(){if(!busy)go(step===6?0:step+1)}
+  function showToast(text){clearTimeout(toastTimer);$('toast').textContent=text;$('toast').hidden=false;toastTimer=setTimeout(()=>$('toast').hidden=true,3500)}
+  $('next').addEventListener('click',next);
+  $('prev').addEventListener('click',()=>{if(!busy&&step>0)go(step-1)});
+  $('reset').addEventListener('click',()=>go(0));
+  $('trace').addEventListener('click',()=>{
+    if(busy)return;trace=!trace;sync();['dimensions','markers','annotations'].forEach(id=>$(id).replaceChildren());
+    animate(targetPoints(step,trace));
+  });
+  $('fullscreen').addEventListener('click',async()=>{
+    try{
+      if(!document.fullscreenElement){if(!document.documentElement.requestFullscreen)throw Error('unsupported');await document.documentElement.requestFullscreen();}
+      else await document.exitFullscreen();
+    }catch{showToast('可使用浏览器菜单中的“全屏”，或按 F11。');}
+  });
+  document.addEventListener('fullscreenchange',()=>{$('fullscreen-label').textContent=document.fullscreenElement?'退出全屏':'全屏'});
+  document.addEventListener('keydown',e=>{
+    if(e.altKey||e.ctrlKey||e.metaKey||e.repeat)return;
+    const target=e.target,focusedButton=target&&target.closest&&target.closest('button,[role="button"]');
+    if((e.key===' '||e.key==='Enter')&&focusedButton)return;
+    if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();next()}
+    else if(e.key==='ArrowLeft'){e.preventDefault();if(!busy&&step>0)go(step-1)}
+    else if(e.key.toLowerCase()==='r')go(0);
+  });
+  function svgPoint(e){const p=$('diagram').createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform($('diagram').getScreenCTM().inverse())}
+  $('scissors').addEventListener('pointerdown',e=>{
+    if(step!==3||busy)return;e.preventDefault();
+    drag={id:e.pointerId,offset:svgPoint(e).y-125,y:125};$('scissors').setPointerCapture(e.pointerId);
+  });
+  $('scissors').addEventListener('pointermove',e=>{
+    if(!drag||drag.id!==e.pointerId)return;
+    drag.y=Math.max(125,Math.min(365,svgPoint(e).y-drag.offset));
+    $('scissors').setAttribute('transform','translate(640 '+drag.y+')');
+  });
+  function endDrag(e){
+    if(!drag||drag.id!==e.pointerId)return;
+    const cut=drag.y>=315;drag=null;
+    if($('scissors').hasPointerCapture(e.pointerId))$('scissors').releasePointerCapture(e.pointerId);
+    if(cut)go(4);else{$('scissors').setAttribute('transform','translate(640 125)');showToast('沿虚线拖到最下面，让剪刀经过全部 4 层。');}
+  }
+  $('scissors').addEventListener('pointerup',endDrag);
+  $('scissors').addEventListener('pointercancel',()=>{drag=null;if(step===3)$('scissors').setAttribute('transform','translate(640 125)')});
+  $('scissors').addEventListener('keydown',e=>{if(step===3&&(e.key==='Enter'||e.key===' ')){e.preventDefault();e.stopPropagation();next()}});
+  go(0,true);
+})();
+</script>
+</body>
+</html>
