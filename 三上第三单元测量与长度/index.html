@@ -10,7 +10,8 @@
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden}body{font-family:var(--sans);color:var(--ink);background:var(--paper);-webkit-tap-highlight-color:transparent}button{font:inherit;cursor:pointer;border:0;touch-action:manipulation;user-select:none}button:focus-visible{outline:4px solid var(--gold);outline-offset:4px}button:disabled{cursor:default;opacity:.35}button:active:not(:disabled){transform:translateY(2px)}
 .app{height:100dvh;max-width:2200px;margin:auto;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;padding:20px 32px 20px;gap:16px}.masthead{display:flex;align-items:center;justify-content:space-between;gap:24px}.brand{white-space:nowrap}.brand strong{font-family:var(--round);font-size:clamp(21px,1.65vw,32px);letter-spacing:.03em}.brand small{display:block;font-size:15px;color:var(--muted);margin-top:3px;letter-spacing:.1em}.tabs{display:flex;gap:10px}.tab{background:transparent;border:2px solid transparent;min-height:62px;padding:8px 20px;border-radius:14px;font-size:clamp(20px,1.65vw,30px);font-weight:650;color:var(--muted)}.tab[aria-selected="true"]{border-color:var(--teal);background:#e3f1f3;color:#075e6c}.tab b{margin-right:10px;font-family:"Avenir Next",var(--sans)}
 .question{display:flex;align-items:flex-start;gap:22px;min-height:106px;background:#fff;border-radius:18px;padding:20px 26px}.question-number{font-size:clamp(24px,2.2vw,39px);line-height:1.3;color:var(--teal);font-weight:750;padding-right:22px;border-right:2px solid var(--line);white-space:nowrap}.question p{margin:0;font-family:var(--round);font-size:clamp(23px,2.1vw,38px);font-weight:550;line-height:1.5}.question em{font-style:normal;color:#086b7d;font-weight:750;white-space:nowrap}
-.board{position:relative;overflow:hidden;border-radius:22px;background:#fff;min-height:0;border:1px solid var(--line)}.board svg{display:block;width:100%;height:100%;font-family:var(--sans);font-size:30px;fill:var(--ink)}.board text{font-weight:600}.board .soft{fill:var(--muted);font-weight:500}.board .large{font-size:40px;font-weight:750}.board .small{font-size:25px}.board .unit{font-size:31px}.board .answer{fill:#075e6c;font-size:39px;font-weight:750}.board .guide{stroke:#8ba7b8;stroke-width:2;stroke-dasharray:7 6;fill:none}.board .dim{stroke:var(--ink);stroke-width:2;fill:none}.board .fade-in{animation:appear .45s ease both}.board .slide-in{animation:place .55s ease both}.board .clip-move{animation:align .9s ease both}.board .car-move{animation:drive .95s ease both}.board .rope-grow{animation:rope .65s ease both;transform-origin:left center}.board .knotted{fill:none;stroke:var(--orange);stroke-width:9;stroke-linecap:round;stroke-linejoin:round}.board .round-line{stroke-linecap:round;stroke-linejoin:round}
+.board{position:relative;display:grid;grid-template-rows:minmax(0,1fr) auto;overflow:hidden;border-radius:22px;background:#fff;min-height:0;border:1px solid var(--line)}.board svg{display:block;width:100%;height:100%;min-height:0;font-family:var(--sans);font-size:30px;fill:var(--ink)}.board text{font-weight:600}.board .soft{fill:var(--muted);font-weight:500}.board .large{font-size:40px;font-weight:750}.board .small{font-size:25px}.board .unit{font-size:31px}.board .answer{fill:#075e6c;font-size:39px;font-weight:750}.board .guide{stroke:#8ba7b8;stroke-width:2;stroke-dasharray:7 6;fill:none}.board .dim{stroke:var(--ink);stroke-width:2;fill:none}.board .fade-in{animation:appear .45s ease both}.board .slide-in{animation:place .55s ease both}.board .clip-move{animation:align .9s ease both}.board .car-move{animation:drive .95s ease both}.board .rope-grow{animation:rope .65s ease both;transform-origin:left center}.board .knotted{fill:none;stroke:var(--orange);stroke-width:9;stroke-linecap:round;stroke-linejoin:round}.board .round-line{stroke-linecap:round;stroke-linejoin:round}
+[hidden]{display:none!important}.equation-panel{border-top:1px solid var(--line);background:#f1f8f9;padding:13px 26px;display:grid;gap:9px}.equation-row{display:grid;grid-template-columns:106px minmax(0,1fr);gap:20px;align-items:center}.equation-label{font-size:21px;font-weight:650;color:var(--muted);white-space:nowrap}.equation-values{display:flex;align-items:center;flex-wrap:wrap;gap:8px 36px}.equation-value{font-family:"Avenir Next",var(--sans);font-size:clamp(23px,1.85vw,34px);font-weight:700;line-height:1.35;white-space:nowrap}.equation-row.final{border-top:1px solid #cbdfe4;padding-top:9px;color:#075e6c}.equation-row.final .equation-label{color:#075e6c}
 @keyframes appear{from{opacity:0}to{opacity:1}}@keyframes place{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}@keyframes align{from{transform:translateX(60px)}to{transform:translateX(0)}}@keyframes drive{from{transform:translateX(var(--car-from))}to{transform:translateX(0)}}@keyframes rope{from{opacity:.35;transform:scaleX(.88)}to{opacity:1;transform:scaleX(1)}}
 .toolbar{display:flex;align-items:center;gap:14px;min-height:72px}.control{display:flex;align-items:center;justify-content:center;min-height:66px;border-radius:14px;padding:12px 25px;font-size:clamp(21px,1.7vw,31px);font-weight:650;background:#e1eaf0;color:var(--ink);white-space:nowrap}.control.prev{min-width:150px}.control.next{background:var(--teal);color:#fff;min-width:310px}.control.reset{background:#fff;border:2px solid var(--line)}.control.fullscreen{margin-left:auto;background:#fff;border:2px solid var(--line);min-width:130px}.control-hint{color:var(--muted);font-size:17px;margin-left:9px;line-height:1.5;white-space:nowrap}.control svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;margin-right:12px}.fullscreen-note{position:absolute;inset:auto 20px 16px auto;max-width:80%;font-size:20px;padding:10px 15px;background:#f1f6f9;border:1px solid var(--line);border-radius:10px;display:none}.fullscreen-note.show{display:block}
 @media(min-width:1600px){.app{padding:28px 42px;gap:20px}.question{padding:24px 32px;min-height:126px}.tab{min-height:74px;padding:10px 28px}.control{min-height:78px}.control.next{min-width:390px}.control-hint{font-size:20px}}
@@ -18,12 +19,15 @@
 @media(max-height:690px) and (min-width:850px){.app{padding-top:10px;padding-bottom:10px;gap:10px}.question{min-height:82px;padding:12px 20px}.question p{font-size:24px}.tab{min-height:50px}.brand small{display:none}.toolbar{min-height:56px}.control{min-height:56px}}
 @media(max-width:850px){html,body{overflow:auto}.app{min-height:100dvh;height:auto;grid-template-rows:auto auto minmax(320px,1fr) auto}.masthead{align-items:flex-start;flex-direction:column;gap:10px}.tabs{width:100%;justify-content:space-between;gap:4px}.tab{font-size:17px;padding:6px 8px;min-height:48px}.tab b{margin-right:5px}.question{gap:12px;min-height:100px;padding:14px}.question-number{font-size:22px;padding-right:12px}.question p{font-size:21px}.board{height:clamp(310px,50vw,470px)}.toolbar{flex-wrap:wrap;gap:8px}.control{font-size:18px;padding:10px 15px;min-height:52px}.control.next{min-width:220px;flex:1}.control.prev{min-width:100px}.control.fullscreen{min-width:100px;margin-left:0}.control-hint{display:none}.control svg{margin-right:6px;width:20px;height:20px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+@media(max-width:1150px){.equation-panel{padding:10px 18px;gap:7px}.equation-row{grid-template-columns:88px minmax(0,1fr);gap:14px}.equation-label{font-size:18px}.equation-values{gap:5px 24px}}
+@media(max-height:690px) and (min-width:850px){.equation-panel{padding:8px 18px;gap:6px}.equation-value{font-size:22px}.equation-row.final{padding-top:6px}}
+@media(max-width:850px){.board.has-equations{height:540px}.equation-row{grid-template-columns:1fr;gap:4px}.equation-label{font-size:17px}.equation-value{font-size:20px;white-space:normal}.equation-panel{padding:10px 14px}.equation-values{gap:4px 16px}}
 </style>
 </head>
 <body>
 <main class="app">
   <header class="masthead">
-    <div class="brand"><strong>测量与长度</strong><small>三年级上册 · 第三单元</small></div>
+    <div class="brand"><strong>测量与长度</strong><small>三年级上册 · 第三单元试卷讲评</small></div>
     <nav class="tabs" role="tablist" aria-label="选择题目">
       <button class="tab" id="tab-3" role="tab" aria-selected="true" aria-controls="lesson" data-q="3"><b>3</b>测铅笔</button>
       <button class="tab" id="tab-5" role="tab" aria-selected="false" aria-controls="lesson" data-q="5" tabindex="-1"><b>5</b>去A市</button>
@@ -32,10 +36,17 @@
     </nav>
   </header>
   <section class="question" aria-label="题干"><div class="question-number" id="question-number">第3题</div><p id="question-text"></p></section>
-  <section class="board" id="lesson" role="tabpanel" aria-labelledby="tab-3"><svg id="diagram" viewBox="0 0 1440 520" role="img" aria-label="测量铅笔图示"></svg><div class="fullscreen-note" id="fullscreen-note" role="status"></div></section>
+  <section class="board" id="lesson" role="tabpanel" aria-labelledby="tab-3">
+    <svg id="diagram" viewBox="0 0 1440 520" role="img" aria-label="测量铅笔图示"></svg>
+    <section class="equation-panel" id="equations" aria-label="算式" aria-live="polite" hidden>
+      <div class="equation-row"><span class="equation-label">本步算式</span><div class="equation-values" id="step-equations"></div></div>
+      <div class="equation-row final" id="final-equation-row" hidden><span class="equation-label">最终算式</span><div class="equation-values" id="final-equation"></div></div>
+    </section>
+    <div class="fullscreen-note" id="fullscreen-note" role="status"></div>
+  </section>
   <footer class="toolbar" aria-label="教师操作">
     <button class="control prev" id="previous" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>上一步</button>
-    <button class="control next" id="next">对齐0刻度<svg viewBox="0 0 24 24" aria-hidden="true" style="margin:0 0 0 14px"><path d="m9 5 7 7-7 7"/></svg></button>
+    <button class="control next" id="next">看清起止刻度<svg viewBox="0 0 24 24" aria-hidden="true" style="margin:0 0 0 14px"><path d="m9 5 7 7-7 7"/></svg></button>
     <button class="control reset" id="reset"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10a8 8 0 1 1 0 5M4 3v7h7"/></svg>重来</button>
     <span class="control-hint">← → 切换画面<br>R 重来 · F 全屏</span>
     <button class="control fullscreen" id="fullscreen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M21 16v5h-5M8 21H3v-5"/></svg><span>全屏</span></button>
@@ -48,10 +59,10 @@
 const model=Object.freeze({clipStartMM:5,clipEndMM:30,clipCount:3,distanceKM:220,speedKMH:80,startHour:8,endHour:11,wallCM:360,chairCM:40,ropeCount:3,knotCount:2,joinedCM:180,knotLossCM:15});
 const derived=Object.freeze({clipMM:model.clipEndMM-model.clipStartMM,pencilMM:(model.clipEndMM-model.clipStartMM)*model.clipCount,travelKM:model.speedKMH*(model.endHour-model.startHour),chairs:model.wallCM/model.chairCM,originalTotalCM:model.joinedCM+model.knotCount*model.knotLossCM,originalRopeCM:(model.joinedCM+model.knotCount*model.knotLossCM)/model.ropeCount});
 const lessons={
-  3:{text:'下面这支铅笔有多长？',alt:'一枚回形针放在直尺上，左端在5毫米，右端在3厘米；铅笔和三枚首尾相接的回形针一样长。',actions:['对齐0刻度','看回形针长度','铺开三段长度','显示铅笔长度']},
+  3:{text:'下面这支铅笔有多长？',alt:'一枚回形针放在直尺上，左端在5毫米，右端在3厘米；铅笔和三枚首尾相接的回形针一样长。',actions:['看清起止刻度','对齐0刻度','铺开三段长度','显示最终算式']},
   5:{text:'小林一家驾车去相距<em>220千米</em>的A市。<br>汽车每小时行驶<em>80千米</em>，上午<em>8时</em>出发，<em>11时</em>能到达吗？',alt:'家与A市相距220千米，下面是从8时到11时的时间线。',actions:['行驶1小时','再行驶1小时','看看11时能否到达']},
-  6:{text:'会议室这面墙长<em>3米6分米</em>，每把椅子宽<em>40厘米</em>。像图中这样紧挨着摆放，可以放多少把？',alt:'墙边紧挨着摆放椅子，墙长3米6分米，每把椅子宽40厘米。',actions:['把墙长换成厘米','再摆一把','再摆一把','再摆一把','再摆一把','再摆一把','再摆一把','显示把数']},
-  7:{text:'把<em>3根一样长</em>的绳子接成一条长<em>1米8分米</em>的绳子，每个打结处用了<em>15厘米</em>。<br>原来每根绳子长多少分米？',alt:'三根一样长的绳子接为一条，只有两个打结处；每处合计用去15厘米。',actions:['接成一条绳','看看两个打结处','松开绳结，放回用去的长度','对齐三根绳子','显示每根长度']}
+  6:{text:'会议室这面墙长<em>3米6分米</em>，每把椅子宽<em>40厘米</em>。像图中这样紧挨着摆放，可以放多少把？',alt:'墙边紧挨着摆放椅子，墙长3米6分米，每把椅子宽40厘米。',actions:['把墙长换成厘米','再摆一把','再摆一把','再摆一把','再摆一把','再摆一把','再摆一把','显示最终算式']},
+  7:{text:'把<em>3根一样长</em>的绳子接成一条长<em>1米8分米</em>的绳子，每个打结处用了<em>15厘米</em>。<br>原来每根绳子长多少分米？',alt:'三根一样长的绳子接为一条，只有两个打结处；每处合计用去15厘米。',actions:['接成一条绳','看看两个打结处','松开绳结，放回用去的长度','对齐三根绳子','显示最终算式']}
 };
 let question=3,stage=0,animate=true;
 const svg=document.getElementById('diagram'),prev=document.getElementById('previous'),next=document.getElementById('next');
@@ -63,10 +74,11 @@ function pill(x,y,w,label,color=c.teal){return `<g><rect x="${x-w/2}" y="${y-34}
 function clip(x,y,w,color=c.teal,extra=''){return `<g transform="translate(${x} ${y})"><g ${extra}><path d="M64 7H${w-32}A29 29 0 0 1 ${w-32} 65H32A29 29 0 0 1 32 7H${w-46}A19 19 0 0 1 ${w-46} 45H42A9 9 0 0 1 42 27H${w-61}" fill="none" stroke="${color}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g></g>`}
 function ruler(x,y,scale=12){let s=`<rect x="${x-16}" y="${y}" width="${50*scale+40}" height="88" rx="7" fill="#fff4d7" stroke="#c6a54f" stroke-width="2"/>`;for(let i=0;i<=50;i++){const tall=i%10===0?31:i%5===0?23:14;s+=line(x+i*scale,y,x+i*scale,y+tall,c.ink,i%10===0?2.3:1.4);if(i%10===0)s+=text(x+i*scale,y+65,i/10,'');}return s+text(x+50*scale+23,y+65,'cm','small','start');}
 function pencil(x,y,w){return `<g transform="translate(${x} ${y})"><rect x="0" y="0" width="${w-52}" height="36" rx="2" fill="#e5aa24"/><rect x="0" y="12" width="${w-52}" height="10" fill="#f9d36f"/><path d="M${w-52} 0 ${w} 18 ${w-52} 36Z" fill="#e6c39b"/><path d="M${w-14} 13 ${w} 18 ${w-14} 23Z" fill="${c.ink}"/><rect x="0" width="25" height="36" rx="5" fill="#e9898f"/><rect x="25" width="16" height="36" fill="#b6c8d1"/></g>`}
-function q3(){const X=180,S=12,clipW=derived.clipMM*S,clipX=X+(stage===0?model.clipStartMM*S:0);let s=(stage<2?text(1070,76,'一枚回形针','soft'):'')+ruler(X,167,S);
-  if(stage===0){s+=line(clipX,94,clipX,167,c.teal,2,'stroke-dasharray="6 5"')+line(clipX+clipW,94,clipX+clipW,167,c.teal,2,'stroke-dasharray="6 5"');}
-  s+=clip(clipX,91,clipW,c.teal,stage===1&&animate?'class="clip-move"':'');
-  if(stage>=1)s+=line(X,90,X,167,c.teal,2,'stroke-dasharray="6 5"')+line(X+clipW,90,X+clipW,167,c.teal,2,'stroke-dasharray="6 5"');
+function q3(){const X=180,S=12,clipW=derived.clipMM*S,clipX=X+(stage<=1?model.clipStartMM*S:0);let s=(stage<2?text(1070,76,'一枚回形针','soft'):'')+ruler(X,167,S);
+  if(stage<=1){s+=line(clipX,94,clipX,167,c.teal,2,'stroke-dasharray="6 5"')+line(clipX+clipW,94,clipX+clipW,167,c.teal,2,'stroke-dasharray="6 5"');}
+  if(stage===1)s+=text(clipX,79,'起点5毫米','small','middle',c.teal)+text(clipX+clipW,79,'终点30毫米','small','middle',c.teal);
+  s+=clip(clipX,91,clipW,c.teal,stage===2&&animate?'class="clip-move"':'');
+  if(stage>=2)s+=line(X,90,X,167,c.teal,2,'stroke-dasharray="6 5"')+line(X+clipW,90,X+clipW,167,c.teal,2,'stroke-dasharray="6 5"');
   if(stage>=2)s+=dim(X,X+clipW,80,'25毫米',c.teal)+pill(1070,174,274,'一枚回形针',c.teal)+text(1070,228,'25毫米','large','middle',c.teal);
   const Y=324,colors=[c.teal,c.blue,c.violet];
   for(let i=0;i<model.clipCount;i++){s+=clip(X+i*clipW,Y,clipW,stage>=3?colors[i]:c.teal);if(stage>=3)s+=dim(X+i*clipW,X+(i+1)*clipW,Y-20,'25毫米',colors[i]);}
@@ -115,7 +127,36 @@ function q7(){const X=216,S=4.8,L=derived.originalRopeCM*S,colors=[c.teal,c.blue
   return s;
 }
 const drawing={3:q3,5:q5,6:q6,7:q7};
-function render(){const lesson=lessons[question];document.getElementById('question-number').textContent=`第${question}题`;document.getElementById('question-text').innerHTML=lesson.text;document.getElementById('lesson').setAttribute('aria-labelledby',`tab-${question}`);svg.setAttribute('aria-label',lesson.alt);svg.innerHTML=`<title>第${question}题课堂图示</title><desc>${lesson.alt}</desc>`+drawing[question]();svg.dataset.question=question;svg.dataset.stage=stage;prev.disabled=stage===0;next.disabled=stage===lesson.actions.length;next.innerHTML=(lesson.actions[stage]||'已到最后')+'<svg viewBox="0 0 24 24" aria-hidden="true" style="margin:0 0 0 14px"><path d="m9 5 7 7-7 7"/></svg>';for(const el of document.querySelectorAll('.tab')){const active=Number(el.dataset.q)===question;el.setAttribute('aria-selected',String(active));el.tabIndex=active?0:-1;}}
+function calculationFor(q,s){
+  if(s===0)return {current:[],complete:null};
+  let current=[],complete='';
+  if(q===3){
+    current=[[],['3厘米＝30毫米'],[`${model.clipEndMM}－${model.clipStartMM}＝${derived.clipMM}（毫米）`],[`${derived.clipMM}×${model.clipCount}＝${derived.pencilMM}（毫米）`],[`${derived.pencilMM}毫米＝${Math.floor(derived.pencilMM/10)}厘米${derived.pencilMM%10}毫米`]][s];
+    complete=`（${model.clipEndMM}－${model.clipStartMM}）×${model.clipCount}＝${derived.pencilMM}（毫米）`;
+  }else if(q===5){
+    const hours=s,km=model.speedKMH*hours;
+    current=[`${model.startHour+hours}－${model.startHour}＝${hours}（小时）`,`${model.speedKMH}×${hours}＝${km}（千米）`];
+    complete=`${model.speedKMH}×（${model.endHour}－${model.startHour}）＝${derived.travelKM}（千米），${derived.travelKM}＞${model.distanceKM}`;
+  }else if(q===6){
+    const count=Math.min(s+2,derived.chairs);
+    current=s===1?['3米6分米＝360厘米']:s===lessons[q].actions.length?[`${model.wallCM}÷${model.chairCM}＝${derived.chairs}（把）`]:[`${model.chairCM}×${count}＝${model.chairCM*count}（厘米）`];
+    complete=`（300＋60）÷${model.chairCM}＝${derived.chairs}（把）`;
+  }else if(q===7){
+    const lost=model.knotCount*model.knotLossCM;
+    current=[[],[`${model.ropeCount}－1＝${model.knotCount}（个）`],[`${model.knotLossCM}×${model.knotCount}＝${lost}（厘米）`],['1米8分米＝180厘米',`${model.joinedCM}＋${lost}＝${derived.originalTotalCM}（厘米）`],[`${derived.originalTotalCM}÷${model.ropeCount}＝${derived.originalRopeCM}（厘米）`],[`${derived.originalRopeCM}厘米＝${derived.originalRopeCM/10}分米`]][s];
+    complete=`（${model.joinedCM}＋${model.knotLossCM}×${model.knotCount}）÷${model.ropeCount}＝${derived.originalRopeCM}（厘米）`;
+  }
+  return {current,complete:s===lessons[q].actions.length?complete:null};
+}
+function renderEquations(){
+  const value=calculationFor(question,stage),panel=document.getElementById('equations');
+  panel.hidden=value.current.length===0;
+  document.getElementById('lesson').classList.toggle('has-equations',!panel.hidden);
+  document.getElementById('step-equations').innerHTML=value.current.map(eq=>`<span class="equation-value">${eq}</span>`).join('');
+  document.getElementById('final-equation-row').hidden=!value.complete;
+  document.getElementById('final-equation').innerHTML=value.complete?`<span class="equation-value">${value.complete}</span>`:'';
+}
+function render(){const lesson=lessons[question];document.getElementById('question-number').textContent=`第${question}题`;document.getElementById('question-text').innerHTML=lesson.text;document.getElementById('lesson').setAttribute('aria-labelledby',`tab-${question}`);svg.setAttribute('aria-label',lesson.alt);svg.innerHTML=`<title>第${question}题课堂图示</title><desc>${lesson.alt}</desc>`+drawing[question]();svg.dataset.question=question;svg.dataset.stage=stage;renderEquations();prev.disabled=stage===0;next.disabled=stage===lesson.actions.length;next.innerHTML=(lesson.actions[stage]||'已到最后')+'<svg viewBox="0 0 24 24" aria-hidden="true" style="margin:0 0 0 14px"><path d="m9 5 7 7-7 7"/></svg>';for(const el of document.querySelectorAll('.tab')){const active=Number(el.dataset.q)===question;el.setAttribute('aria-selected',String(active));el.tabIndex=active?0:-1;}}
 function move(amount){const target=Math.max(0,Math.min(lessons[question].actions.length,stage+amount));if(target===stage)return;animate=amount>0;stage=target;render();}
 function reset(){stage=0;animate=false;render();}
 function select(q){question=q;reset();}
